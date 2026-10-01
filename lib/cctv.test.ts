@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test, { afterEach, beforeEach } from "node:test";
-import { getFrame, resetCameraState } from "./cctv.ts";
+import { DOH_HLS_RE, getFrame, loadCameras, resetCameraState } from "./cctv.ts";
 
 const realFetch = globalThis.fetch;
 const realError = console.error;
@@ -189,4 +189,20 @@ test("never queues unbounded work behind a slow upstream: the 7th distinct camer
   assert.equal(err(await getFrame(codes[6], 0)), "busy");
   release();
   assert.ok((await Promise.all(inflight)).every(ok));
+});
+
+test("DOH cameras are played by the browser: valid relay playlists, never fetched by our proxy", async () => {
+  const doh = (await loadCameras()).filter((c) => c.source === "doh");
+  assert.equal(doh.length, 5);
+  for (const c of doh) {
+    assert.ok(c.hls && DOH_HLS_RE.test(c.hls), `${c.code}: ${c.hls}`);
+    assert.ok(c.lat > 13.7 && c.lat < 14.1 && c.lon > 100.3 && c.lon < 100.8, `${c.code} is near Nonthaburi`);
+  }
+  assert.equal(new Set(doh.map((c) => c.code)).size, 5);
+  stub(() => jpg());
+  assert.equal(err(await getFrame("DOH-PER-9-026", 0)), "not_found", "the frame proxy must not become an open relay for the DOH host");
+  assert.equal(calls.length, 0);
+  for (const bad of ["http://camerai1.iticfoundation.org/pass/1.2.3.4:1935/Phase9/PER_9_026_IN.stream/playlist.m3u8", "https://camerai1.iticfoundation.org.evil.com/pass/1.2.3.4:1935/Phase9/PER_9_026_IN.stream/playlist.m3u8", "https://evil.com/pass/1.2.3.4/Phase9/PER_9.stream/playlist.m3u8"]) {
+    assert.ok(!DOH_HLS_RE.test(bad), bad);
+  }
 });

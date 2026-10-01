@@ -1,10 +1,12 @@
-// Two informal public sources, none with stated terms. Fine for a local PoC; get written permission
+// Three informal public sources, none with stated terms. Fine for a local PoC; get written permission
 // from each owner before any public deployment.
-//  muni    Nonthaburi City Municipality flood center (plain HTTP on a bare IP, 7-22 s per frame)
+//  muni    Nonthaburi City Municipality flood center (plain HTTP on a bare IP, 2-24 s per frame)
 //  pakkret Pak Kret municipal CCTV on a contractor host (https, 320x240 stills, flaky)
-// ponytail: a DOH highway HLS stream near Bang Bua Thong (streaming1.highwaytraffic.go.th, PER_10_019_IN)
-// was tried and dropped: it decodes about a second of video, then stalls with MEDIA_ERR_DECODE in Chrome.
-export type Source = "muni" | "pakkret";
+//  doh     Department of Highways road cameras, live HLS video relayed by iTIC Foundation (listed in Longdo's
+//          traffic.longdo.com/camera.json). Played by the browser straight from the relay, never through our proxy.
+//          An earlier DOH stream (streaming1.highwaytraffic.go.th) stalled with MEDIA_ERR_DECODE in Chrome; these five
+//          relay streams were checked with hls.js 1.7 (20-45 s each, no fatal errors).
+export type Source = "muni" | "pakkret" | "doh";
 export type Camera = {
   code: string;
   source: Source;
@@ -13,6 +15,7 @@ export type Camera = {
   lon: number;
   cams: string[]; // upstream ids used by getFrame
   labels: string[]; // what to show for each frame
+  hls?: string; // doh only: playlist URL the browser plays directly
 };
 
 const MUNI = "http://182.52.224.70"; // frames only: the station list is a static snapshot below
@@ -37,7 +40,20 @@ const PAKKRET: { id: string; name: string; lat: number; lon: number }[] = [
 ];
 const PAKKRET_ID_RE = /^CAMPK\d{3}$/;
 
+const DOH_HLS = "https://camerai1.iticfoundation.org/pass/180.180.242.207:1935/";
+export const DOH_HLS_RE = /^https:\/\/camerai1\.iticfoundation\.org\/pass\/[\d.:]+\/Phase\d{1,2}\/PER_[\w]+\.stream\/playlist\.m3u8$/;
+// Snapshot of Longdo's camera list taken 2026-10-01: every DOH camera in Nonthaburi, plus Lam Luk Ka (Pathum Thani).
+// Road cameras, not river cameras: they show whether a road is passable.
+const DOH: { code: string; name: string; path: string; lat: number; lon: number }[] = [
+  { code: "DOH-PER-9-026", name: "ทล.302 เมืองนนทบุรี (มุ่งหน้าเข้า กทม.)", path: "Phase9/PER_9_026_IN", lat: 13.87167, lon: 100.462385 },
+  { code: "DOH-PER-9-026-out", name: "ทล.302 เมืองนนทบุรี (มุ่งหน้าออก บางใหญ่)", path: "Phase9/PER_9_026_OUT", lat: 13.87187, lon: 100.462385 },
+  { code: "DOH-PER-3-006", name: "ถ.กาญจนาภิเษก บางใหญ่ (มุ่งหน้าบางแค)", path: "Phase3/PER_3_006_IN", lat: 13.83, lon: 100.4132 },
+  { code: "DOH-PER-3-006-out", name: "ถ.กาญจนาภิเษก บางใหญ่ (มุ่งหน้าบางบัวทอง)", path: "Phase3/PER_3_006_OUT", lat: 13.8302, lon: 100.4132 },
+  { code: "DOH-PER-3-017", name: "ถ.ลำลูกกา กม.9 ปทุมธานี (มุ่งหน้า ถ.พหลโยธิน)", path: "Phase3/PER_3_017", lat: 13.9329, lon: 100.6882 },
+];
+
 const STATIC: Camera[] = [
+  ...DOH.map((d) => ({ code: d.code, source: "doh" as const, name: d.name, lat: d.lat, lon: d.lon, cams: [d.code], labels: [d.name], hls: `${DOH_HLS}${d.path}.stream/playlist.m3u8` })),
   ...PAKKRET.map((p) => ({ code: p.id, source: "pakkret" as const, name: p.name, lat: p.lat, lon: p.lon, cams: [p.id], labels: [p.name] })),
 ];
 
@@ -90,7 +106,7 @@ export async function loadCameras(): Promise<Camera[]> {
 // Players poll continuously, so the cache only has to merge viewers, not hide the upstream.
 // Municipal frames are not reused at all (0): the server is slow enough (2-24 s per frame) to throttle its own loop, and a
 // reused frame is only a repeat for the player. Single-flight still merges viewers that ask while a fetch is in flight.
-const FRAME_TTL_MS: Record<Source, number> = { muni: 0, pakkret: 800 };
+const FRAME_TTL_MS: Record<Source, number> = { muni: 0, pakkret: 800, doh: 0 }; // doh never reaches getFrame: the browser plays it directly
 const MAX_UPSTREAM = 6; // distinct cameras in flight; upstream can take 7-22 s per frame, so never queue unbounded work behind it
 const MAX_BYTES = 2_000_000;
 const MIN_BYTES = 500; // Pak Kret answers 200 with an empty body for ids it doesn't know

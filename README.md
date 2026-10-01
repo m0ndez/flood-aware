@@ -28,7 +28,7 @@ Optional environment variables (server only, `.env.local`): `TMD_UID`, `TMD_UKEY
 | Flood extent | NASA GIBS (MODIS) | About 250 m, a day old, cloud shows as grey |
 | Base maps | OpenStreetMap, Esri World Imagery and Dark Gray | Attribution is shown on the map |
 | News | RSS feeds of Thai PBS, Thairath, Matichon, Khaosod, Thai Post, The Standard, The Bangkok Insight, Bangkok Post | Headline, outlet and link only, never article text or images. Thai headlines are not translated. Keyword filter, so it can miss or include stories. Press reports, not official bulletins; official bodies are plain links. Daily News skipped (its robots.txt disallows feeds) |
-| Cameras | Nonthaburi City Municipality, Pak Kret municipality | Informal public feeds, still frames only, no stated terms |
+| Cameras | Nonthaburi City Municipality, Pak Kret municipality, Department of Highways (via iTIC Foundation, listed by Longdo Traffic) | Informal public feeds with no stated terms. Municipal and Pak Kret are still frames through our proxy; the 5 Highways road cameras are live HLS video played by the browser (`hls.js`) straight from the iTIC relay, so they cost our server nothing |
 
 **Before any real deployment:** every third-party source above needs its terms and permission checked, the camera sources in particular. This repository does not grant any rights to that data.
 
