@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nonthaburi Flood Monitor
 
-## Getting Started
+A public, read-only flood dashboard on one fullscreen map: river and canal levels against bank level, rain, forecasts, rain radar, satellite flood extent and live camera frames. Thai first (`?lang=en` for English). It starts on Nonthaburi and extends to the Central and Eastern provinces around it.
 
-First, run the development server:
+**It is a personal portfolio/demo, not an official warning service.** Stale, missing or failed data is shown as stale, never as normal. For real warnings follow the authorities (e.g. tmd.go.th).
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm dev        # http://localhost:3000
+pnpm test       # node --test lib/*.test.ts
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Next.js 16 (Cache Components, App Router), React 19, Tailwind 4, Leaflet. No database, no accounts. See `AGENTS.md` before changing Next.js code: this version differs from older ones.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Optional environment variables (server only, `.env.local`): `TMD_UID`, `TMD_UKEY` (TMD's published shared demo credentials are used if unset).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Data sources
 
-## Learn More
+| What | Source | Notes |
+|---|---|---|
+| Gauges, rain, history | ThaiWater v3 (HII) | Undocumented public JSON, can change without notice |
+| Rain forecast | Open-Meteo | CC BY 4.0, non-commercial |
+| Warnings, 7-day outlook | TMD (data.tmd.go.th) | Warning matching is a keyword filter and can miss items |
+| Radar | TMD RADARGIS, RainViewer fallback | TMD has no published terms; RainViewer is personal/educational use only |
+| Flood extent | NASA GIBS (MODIS) | About 250 m, a day old, cloud shows as grey |
+| Base maps | OpenStreetMap, Esri World Imagery and Dark Gray | Attribution is shown on the map |
+| Cameras | Nonthaburi City Municipality, Pak Kret municipality | Informal public feeds, still frames only, no stated terms |
 
-To learn more about Next.js, take a look at the following resources:
+**Before any real deployment:** every third-party source above needs its terms and permission checked, the camera sources in particular. This repository does not grant any rights to that data.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Layout
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`app/` page and API routes (camera and radar proxies) · `components/` UI · `lib/` data layers and pure logic with tests · `PRODUCT.md` product context.

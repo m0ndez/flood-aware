@@ -1,0 +1,24 @@
+import { parseIct } from "./status.ts";
+
+export type Warning = {
+  issueNo: string;
+  announced: string; // "YYYY-MM-DD HH:mm", Thai time
+  titleTh: string;
+  titleEn: string;
+  descTh: string;
+};
+
+export const WARNING_MAX_AGE_MS = 72 * 3600_000;
+const FUTURE_SKEW_MS = 3600_000;
+// The TMD feed is national text with no province field, so relevance is a keyword match.
+// It can miss a real warning, which is why the UI always carries a permanent link to TMD as well.
+export const KEYWORDS = ["นนทบุรี", "กรุงเทพ", "ภาคกลาง", "เจ้าพระยา"];
+
+export function relevantWarnings(all: Warning[], now: number): Warning[] {
+  return all.filter((w) => {
+    const t = parseIct(w.announced);
+    if (Number.isNaN(t) || t > now + FUTURE_SKEW_MS || now - t > WARNING_MAX_AGE_MS) return false; // never show a stale or bogus item as news
+    const text = `${w.titleTh} ${w.descTh}`;
+    return KEYWORDS.some((k) => text.includes(k));
+  });
+}

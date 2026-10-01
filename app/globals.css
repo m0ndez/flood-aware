@@ -1,26 +1,126 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Dark theme is a class on <main> (set from the "map" cookie on the server), not the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-sans-thai), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+  color: #0f172a;
+}
+
+/* Fullscreen map: the page never scrolls, the floating card and sheet do. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+:focus-visible {
+  outline: 2px solid #0369a1;
+  outline-offset: 2px;
+}
+
+/* Mobile: keep Leaflet's zoom control and attribution above the bottom sheet (height set by FloatingSheet). */
+@media (max-width: 767px) {
+  .leaflet-bottom {
+    margin-bottom: min(var(--sheet-h, 96px), 50dvh);
+  }
+  /* Phone-size touch targets for Leaflet's own zoom buttons. */
+  div.leaflet-container .leaflet-bar a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+  }
+}
+
+/* Status colours: darker on light surfaces, lighter on dark ones, so the badge text stays readable.
+   The map markers keep fixed colours (they carry a white outline and sit on map tiles). */
+:root {
+  --st-normal: #15803d;
+  --st-watch: #b45309;
+  --st-critical: #b91c1c;
+  --st-stale: #6b7280;
+}
+.dark {
+  --st-normal: #4ade80;
+  --st-watch: #fbbf24;
+  --st-critical: #f87171;
+  --st-stale: #9ca3af;
+  color-scheme: dark;
+}
+
+/* Leaflet's own chrome in the dark theme. */
+.dark .leaflet-bar a {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-bottom-color: #475569;
+}
+.dark .leaflet-bar a:hover,
+.dark .leaflet-bar a:focus {
+  background-color: #334155;
+}
+.dark .leaflet-bar {
+  border-color: #475569;
+}
+.dark .leaflet-container .leaflet-control-attribution {
+  background: rgba(15, 23, 42, 0.8);
+  color: #cbd5e1;
+}
+.dark .leaflet-container .leaflet-control-attribution a {
+  color: #7dd3fc;
+}
+.dark .leaflet-container .leaflet-popup-content-wrapper,
+.dark .leaflet-container .leaflet-popup-tip {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+.dark .leaflet-container .leaflet-popup-close-button {
+  color: #cbd5e1;
+}
+
+/* The standard OSM base is saturated (pink roads, purple labels) and fights the status colours: mute it so the
+   markers carry the colour. Satellite and dark bases are untouched. */
+.basemap-muted {
+  filter: saturate(0.4) contrast(0.96) brightness(1.04);
+}
+.dark .basemap-muted {
+  filter: none;
+}
+
+/* The open station's name above its marker. */
+.leaflet-tooltip.station-name {
+  background: #0f172a;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+}
+.leaflet-tooltip-top.station-name::before {
+  border-top-color: #0f172a;
+}
+.dark .leaflet-tooltip.station-name {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.dark .leaflet-tooltip-top.station-name::before {
+  border-top-color: #e2e8f0;
+}
+
+/* Motion is never required to use this app. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
