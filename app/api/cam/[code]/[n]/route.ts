@@ -19,6 +19,8 @@ export async function GET(req: Request, ctx: RouteContext<"/api/cam/[code]/[n]">
       // share one frame between every viewer for ttlS seconds: that is what keeps N viewers from becoming N upstream hits.
       "cache-control": `public, max-age=0, s-maxage=${frame.ttlS}`,
       "x-frame-at": String(frame.at),
+      // The upstream is failing and this is its last good picture: the player must not present it as live.
+      ...(frame.stale && { "x-frame-stale": "1" }),
     },
   });
 }

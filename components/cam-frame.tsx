@@ -9,6 +9,10 @@ import { fmtClock, type Dict, type Lang } from "@/lib/i18n";
 // ponytail: stops after 10 minutes and while the tab is hidden, to spare small public servers.
 // Real video needs a stream URL (RTSP/HLS) from the owners.
 const MAX_SESSION_MS = 10 * 60_000;
+// The proxy answers instantly from its frame cache, with the same picture, until the next one is fetched. Asking
+// again at once only re-decodes that picture in a tight loop, so a repeat waits this long before the next ask.
+const REPEAT_GAP_MS = 1500;
+const SLOW_MS = 8_000;
 
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve) => {
@@ -35,6 +39,7 @@ export function CamFrame({ code, n, label, gapMs, lang, t }: { code: string; n: 
     const deadline = performance.now() + MAX_SESSION_MS;
     (async () => {
       let fails = 0;
+      let lastAt = 0;
       while (!ctl.signal.aborted) {
         if (document.visibilityState === "hidden") {
           await sleep(1000, ctl.signal);
@@ -42,28 +47,36 @@ export function CamFrame({ code, n, label, gapMs, lang, t }: { code: string; n: 
         }
         if (performance.now() > deadline) return void setPlaying(false);
         const req = withTimeout(35_000, ctl.signal);
+        const slow = setTimeout(() => setRetrying(true), SLOW_MS); // a request that hangs must not leave "live" on the screen
         try {
           // No cache option: the route sends max-age=0, so the browser revalidates every poll while the CDN shares frames.
           const res = await fetch(`/api/cam/${encodeURIComponent(code)}/${n}`, { signal: req.signal });
           if (!res.ok) throw new Error(String(res.status));
           const blob = await res.blob();
           if (ctl.signal.aborted) return;
-          const next = URL.createObjectURL(blob);
-          // Decode off-screen first, so the swap is instant and never flashes a half-painted frame.
-          await Object.assign(new Image(), { src: next }).decode().catch(() => {});
-          if (ctl.signal.aborted) return void URL.revokeObjectURL(next);
-          const prev = url.current;
-          url.current = next;
-          setFrame({ src: next, at: Number(res.headers.get("x-frame-at")) || Date.now() });
-          setRetrying(false);
-          if (prev) URL.revokeObjectURL(prev);
-          fails = 0;
-          await sleep(gapMs, ctl.signal);
+          const at = Number(res.headers.get("x-frame-at")) || Date.now();
+          const stale = res.headers.has("x-frame-stale");
+          const repeat = at === lastAt;
+          if (!repeat) {
+            lastAt = at;
+            const next = URL.createObjectURL(blob);
+            // Decode off-screen first, so the swap is instant and never flashes a half-painted frame.
+            await Object.assign(new Image(), { src: next }).decode().catch(() => {});
+            if (ctl.signal.aborted) return void URL.revokeObjectURL(next);
+            const prev = url.current;
+            url.current = next;
+            setFrame({ src: next, at });
+            if (prev) URL.revokeObjectURL(prev);
+          }
+          setRetrying(stale); // last good picture while the source is failing: keep it up, but never say "live"
+          fails = stale ? fails + 1 : 0;
+          await sleep(stale ? Math.min(2000 * fails, 10_000) : repeat ? Math.max(gapMs, REPEAT_GAP_MS) : gapMs, ctl.signal);
         } catch {
           if (ctl.signal.aborted) return;
           setRetrying(true); // keep the last frame on screen and say it is stale
           await sleep(Math.min(2000 * ++fails, 10_000), ctl.signal);
         } finally {
+          clearTimeout(slow);
           req.done();
         }
       }

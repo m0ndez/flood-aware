@@ -88,8 +88,9 @@ export async function loadCameras(): Promise<Camera[]> {
 
 // ponytail: in-process frame cache + single-flight; a shared cache if this ever runs multi-instance.
 // Players poll continuously, so the cache only has to merge viewers, not hide the upstream.
-// The municipal server is slow enough on its own (7-22 s per frame) to throttle its own loop.
-const FRAME_TTL_MS: Record<Source, number> = { muni: 5_000, pakkret: 800 };
+// Municipal frames are not reused at all (0): the server is slow enough (2-24 s per frame) to throttle its own loop, and a
+// reused frame is only a repeat for the player. Single-flight still merges viewers that ask while a fetch is in flight.
+const FRAME_TTL_MS: Record<Source, number> = { muni: 0, pakkret: 800 };
 const MAX_UPSTREAM = 6; // distinct cameras in flight; upstream can take 7-22 s per frame, so never queue unbounded work behind it
 const MAX_BYTES = 2_000_000;
 const MIN_BYTES = 500; // Pak Kret answers 200 with an empty body for ids it doesn't know
@@ -113,7 +114,7 @@ const pending = new Map<string, Promise<Frame>>();
 const MAX_STALE_MS = 30_000;
 const staleFrame = (key: string): Frame | null => {
   const f = frames.get(key);
-  return f && Date.now() - f.at < MAX_STALE_MS ? { ...f, ttlS: 1 } : null;
+  return f && Date.now() - f.at < MAX_STALE_MS ? { ...f, ttlS: 1, stale: true } : null;
 };
 
 const isDown = (cam: Camera, now: number) => (camDown.get(cam.code)?.until ?? 0) > now || (sourceDown.get(cam.source) ?? 0) > now;
@@ -137,7 +138,7 @@ export function resetCameraState() {
   pending.clear();
 }
 
-export type Frame = { at: number; buf: ArrayBuffer; ttlS: number }; // ttlS: how long a shared CDN cache may reuse it
+export type Frame = { at: number; buf: ArrayBuffer; ttlS: number; stale?: true }; // ttlS: how long a shared CDN cache may reuse it
 export type FrameError = "not_found" | "busy" | "upstream";
 
 function frameRequest(cam: Camera, upstreamId: string): { url: string; timeout: number } | null {

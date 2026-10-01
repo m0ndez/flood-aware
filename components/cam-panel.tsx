@@ -6,7 +6,7 @@ import type { Camera } from "@/lib/cctv";
 export function CamPanel({ cam, closeHref, lang, t }: { cam: Camera; closeHref: string; lang: Lang; t: Dict }) {
   const credit = { muni: t.camSourceMuni, pakkret: t.camSourcePakkret }[cam.source];
   const rate = { muni: t.camRateMuni, pakkret: t.camRatePakkret }[cam.source];
-  const gapMs = { muni: 0, pakkret: 800 }[cam.source]; // muni's own latency is the throttle
+  const gapMs = { muni: 500, pakkret: 800 }[cam.source]; // muni is usually slow enough to throttle itself, but when it answers fast, stay at 2 requests/s at most
   return (
     <section id="cam" aria-labelledby="cam-h" className="mb-4 rounded-xl border border-slate-300 dark:border-slate-600 bg-white/70 dark:bg-slate-800/70 p-3">
       <div className="mb-3 flex items-start justify-between gap-3">

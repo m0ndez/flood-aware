@@ -43,10 +43,10 @@ test("Pak Kret frame: https contractor host, id from our list, 1 s shared-cache 
   assert.match(calls[0], /^https:\/\/www\.thaiclouderp\.com\/src\/img\.php\?t=\d+&name=CAMPK024_thumb\.jpg$/);
 });
 
-test("municipal frame: built from our constants with the encoded camera name, 5 s lifetime", async () => {
+test("municipal frame: built from our constants with the encoded camera name, shared for 1 s at the CDN only", async () => {
   stub(() => jpg(40_000, "image/jpeg"));
   const r = await getFrame("A1", 0);
-  assert.ok(ok(r) && r.ttlS === 5);
+  assert.ok(ok(r) && r.ttlS === 1);
   assert.match(calls[0], /^http:\/\/182\.52\.224\.70\/MilestoneImageService\/.*cameraname=A1-%E0%B8/);
   assert.ok(!calls[0].includes("ondate"), "the ignored upstream ondate parameter is never sent");
 });
@@ -107,7 +107,7 @@ test("one transient hang costs seconds, not half a minute, and a success clears 
     fail = true;
     t += 1_000;
     const stale = await getFrame("CAMPK024", 0); // cached frame is older than 0.8 s, upstream fails again: last good frame, not an error
-    assert.ok("buf" in stale && stale.ttlS === 1 && stale.at < t, "stale frame keeps its own capture time and is not shared for long");
+    assert.ok("buf" in stale && stale.stale === true && stale.ttlS === 1 && stale.at < t, "stale frame keeps its own capture time and is not shared for long");
     t += 2_100;
     fail = false;
     assert.ok(ok(await getFrame("CAMPK024", 0)), "backoff restarted at 2 s because the success reset it, not at 4 s");
@@ -132,6 +132,15 @@ test("a failing camera serves its last frame for 30 s, then reports the error", 
   } finally {
     Date.now = realNow;
   }
+});
+
+test("municipal frames are never reused, but viewers asking at once share one fetch", async () => {
+  stub(() => jpg(700, "image/jpeg"));
+  const [a, b, c] = await Promise.all([getFrame("A13", 0), getFrame("A13", 0), getFrame("A13", 0)]);
+  assert.ok(ok(a) && ok(b) && ok(c));
+  assert.equal(calls.length, 1, "three simultaneous viewers, one upstream request");
+  assert.ok(ok(await getFrame("A13", 0)));
+  assert.equal(calls.length, 2, "the next ask fetches again instead of replaying the old frame");
 });
 
 test("backoff doubles for consecutive failures and is capped at 30 s", async () => {
