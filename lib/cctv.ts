@@ -108,6 +108,14 @@ const recentFail = new Map<Source, Map<string, number>>(); // source -> camera c
 const frames = new Map<string, Frame>();
 const pending = new Map<string, Promise<Frame>>();
 
+// A stalled or backing-off camera keeps showing its last good frame (its own capture time stays on it, so the player's
+// clock tells the truth) instead of freezing the player on an error for the whole backoff.
+const MAX_STALE_MS = 30_000;
+const staleFrame = (key: string): Frame | null => {
+  const f = frames.get(key);
+  return f && Date.now() - f.at < MAX_STALE_MS ? { ...f, ttlS: 1 } : null;
+};
+
 const isDown = (cam: Camera, now: number) => (camDown.get(cam.code)?.until ?? 0) > now || (sourceDown.get(cam.source) ?? 0) > now;
 
 function noteFailure(cam: Camera, now: number) {
@@ -137,7 +145,7 @@ function frameRequest(cam: Camera, upstreamId: string): { url: string; timeout: 
     return { url: `${MUNI}${MUNI_IMG}?width=800&height=450&cameraname=${encodeURIComponent(upstreamId)}`, timeout: 30_000 }; // the municipal server takes 7-24 s per frame; stay under the player's own 35 s
   }
   if (cam.source === "pakkret" && PAKKRET_ID_RE.test(upstreamId)) {
-    return { url: `${PAKKRET_IMG}?t=${Date.now()}&name=${upstreamId}_thumb.jpg`, timeout: 6_000 }; // it stalls 20+ s now and then: give up early, the player keeps the last frame
+    return { url: `${PAKKRET_IMG}?t=${Date.now()}&name=${upstreamId}_thumb.jpg`, timeout: 2_500 }; // normally 0.1-0.3 s but it stalls 20+ s now and then: give up early and serve the last frame
   }
   return null;
 }
@@ -150,7 +158,7 @@ export async function getFrame(code: string, n: number): Promise<Frame | { error
   if (!req) return { error: "not_found" };
 
   const key = `${code}/${n}`;
-  if (isDown(cam, Date.now())) return { error: "upstream" };
+  if (isDown(cam, Date.now())) return staleFrame(key) ?? { error: "upstream" };
   const hit = frames.get(key);
   if (hit && Date.now() - hit.at < FRAME_TTL_MS[cam.source]) return hit;
 
@@ -178,6 +186,6 @@ export async function getFrame(code: string, n: number): Promise<Frame | { error
   } catch (e) {
     console.error("frame fetch failed", e);
     noteFailure(cam, Date.now());
-    return { error: "upstream" };
+    return staleFrame(key) ?? { error: "upstream" };
   }
 }

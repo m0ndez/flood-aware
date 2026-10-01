@@ -106,10 +106,29 @@ test("one transient hang costs seconds, not half a minute, and a success clears 
     assert.ok(ok(await getFrame("CAMPK024", 0)), "retried after about 2 s, recovered");
     fail = true;
     t += 1_000;
-    assert.equal(err(await getFrame("CAMPK024", 0)), "upstream"); // cached frame is older than 0.8 s, upstream fails again
+    const stale = await getFrame("CAMPK024", 0); // cached frame is older than 0.8 s, upstream fails again: last good frame, not an error
+    assert.ok("buf" in stale && stale.ttlS === 1 && stale.at < t, "stale frame keeps its own capture time and is not shared for long");
     t += 2_100;
     fail = false;
     assert.ok(ok(await getFrame("CAMPK024", 0)), "backoff restarted at 2 s because the success reset it, not at 4 s");
+  } finally {
+    Date.now = realNow;
+  }
+});
+
+test("a failing camera serves its last frame for 30 s, then reports the error", async () => {
+  const realNow = Date.now;
+  let t = realNow();
+  Date.now = () => t;
+  try {
+    let fail = false;
+    stub(() => (fail ? new Response("x", { status: 500 }) : jpg()));
+    assert.ok(ok(await getFrame("CAMPK024", 0)));
+    fail = true;
+    t += 10_000;
+    assert.ok(ok(await getFrame("CAMPK024", 0)), "10 s old frame still shown");
+    t += 21_000;
+    assert.equal(err(await getFrame("CAMPK024", 0)), "upstream", "31 s old: say so instead of showing it as current");
   } finally {
     Date.now = realNow;
   }

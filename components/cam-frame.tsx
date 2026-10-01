@@ -48,9 +48,13 @@ export function CamFrame({ code, n, label, gapMs, lang, t }: { code: string; n: 
           if (!res.ok) throw new Error(String(res.status));
           const blob = await res.blob();
           if (ctl.signal.aborted) return;
+          const next = URL.createObjectURL(blob);
+          // Decode off-screen first, so the swap is instant and never flashes a half-painted frame.
+          await Object.assign(new Image(), { src: next }).decode().catch(() => {});
+          if (ctl.signal.aborted) return void URL.revokeObjectURL(next);
           const prev = url.current;
-          url.current = URL.createObjectURL(blob);
-          setFrame({ src: url.current, at: Number(res.headers.get("x-frame-at")) || Date.now() });
+          url.current = next;
+          setFrame({ src: next, at: Number(res.headers.get("x-frame-at")) || Date.now() });
           setRetrying(false);
           if (prev) URL.revokeObjectURL(prev);
           fails = 0;
