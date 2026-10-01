@@ -48,6 +48,8 @@ const th = {
     note: "เกณฑ์ของ กทม. เป็นระดับใช้งานของแต่ละคลอง ไม่ใช่ระดับตลิ่ง คลองที่ควบคุมระดับน้ำอาจอยู่เหนือเกณฑ์เป็นปกติ จึงแสดงเป็นสีเหลืองอย่างสูงสุด และไม่นับเป็นล้นตลิ่ง",
     noChart: "แหล่งข้อมูลนี้ไม่มีกราฟย้อนหลัง",
     source: "ข้อมูล: สำนักการระบายน้ำ กรุงเทพมหานคร (weather.bangkok.go.th) ไม่ใช่ประกาศทางการ",
+    sourceMirror: "ข้อมูลของสำนักการระบายน้ำ กทม. ที่ส่งต่อผ่านเว็บของบุคคลที่สาม (flood69.peoplesparty.or.th) ไม่ใช่แหล่งทางการ อาจล่าช้ากว่าต้นทาง 15 นาทีหรือมากกว่า เพราะเซิร์ฟเวอร์ของ กทม. ไม่ตอบเซิร์ฟเวอร์ของเว็บนี้",
+    viaMirror: "ข้อมูลคลอง กทม. ผ่านเว็บของบุคคลที่สาม อาจล่าช้า",
     unavailable: "โหลดข้อมูลคลองและสถานีสูบน้ำของ กทม. ไม่ได้ในขณะนี้ ไม่ได้หมายความว่าปกติ",
   },
   roads: {
@@ -222,6 +224,8 @@ const en: typeof th = {
     note: "BMA's marks are each canal's operating levels, not bank levels. Level-controlled canals can sit above them as a matter of course, so BMA stations show amber at most and are never counted as over bank.",
     noChart: "This source has no history chart.",
     source: "Source: BMA Drainage and Sewerage Department (weather.bangkok.go.th). Not an official warning.",
+    sourceMirror: "BMA Drainage and Sewerage Department data, re-served by a third party (flood69.peoplesparty.or.th). Not an official source, and it can lag BMA by 15 minutes or more, because BMA's server does not answer this site's server.",
+    viaMirror: "BMA canal data via a third-party site, may lag",
     unavailable: "BMA canal and pumping-station data could not be loaded right now. That does not mean they are normal.",
   },
   roads: {

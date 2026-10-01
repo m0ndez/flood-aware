@@ -17,7 +17,7 @@ const Fact = ({ label, value }: { label: string; value: string }) => (
 
 // A BMA canal, pumping station or sluice gate. The feed gives the current level, BMA's own marks and today's and
 // yesterday's maximum, but no history, so there is no chart. The marks are the canal's operating levels, not banks.
-export function BmaDetail({ s, name, status, backHref, lang, t }: { s: BmaStation; name: string; status: Status; backHref: string; lang: Lang; t: Dict }) {
+export function BmaDetail({ s, name, status, mirror, backHref, lang, t }: { s: BmaStation; name: string; status: Status; mirror: boolean; backHref: string; lang: Lang; t: Dict }) {
   const k = t.bma;
   const unit = lang === "th" ? "ม." : "m";
   const m = (v: number | null) => (v == null ? "–" : v.toFixed(2));
@@ -60,7 +60,7 @@ export function BmaDetail({ s, name, status, backHref, lang, t }: { s: BmaStatio
       </dl>
       <p className="text-xs text-slate-700 dark:text-slate-300">{k.note}</p>
       <p className="text-sm text-slate-600 dark:text-slate-400">{k.noChart}</p>
-      <p className="text-xs text-slate-600 dark:text-slate-400">{k.source}</p>
+      <p className="text-xs text-slate-600 dark:text-slate-400">{mirror ? k.sourceMirror : k.source}</p>
     </section>
   );
 }

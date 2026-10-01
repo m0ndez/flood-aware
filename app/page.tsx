@@ -143,7 +143,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
     const k = t.coverage;
     const parts = c.provinces.map((p) => [k.province.replace("{p}", p.name).replace("{n}", String(p.n)), p.stale > 0 ? ` (${k.stale.replace("{s}", String(p.stale))})` : ""].join(""));
     parts.push((c.near > 0 ? k.near : k.nearNone).replace("{r}", String(COVERAGE_KM)).replace("{n}", String(c.near)));
-    return `${k.lead}: ${parts.join(" · ")}`;
+    return `${k.lead}: ${parts.join(" · ")}${bma?.source === "mirror" ? ` · ${t.bma.viaMirror}` : ""}`;
   })();
 
   const selR = sel ? byId.get(sel.id) : undefined;
@@ -234,7 +234,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
           </Suspense>
         )}
         {sel && isBmaId(sel.id) && bmaById.get(sel.id) ? (
-          <BmaDetail s={bmaById.get(sel.id)!} name={sel.name[lang]} status={selStatus} backHref={href(null, { region: sel.region, cam: cam?.code })} lang={lang} t={t} />
+          <BmaDetail s={bmaById.get(sel.id)!} name={sel.name[lang]} status={selStatus} mirror={bma?.source === "mirror"} backHref={href(null, { region: sel.region, cam: cam?.code })} lang={lang} t={t} />
         ) : sel ? (
           <StationDetail
             name={sel.name[lang]}
