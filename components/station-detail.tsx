@@ -42,7 +42,7 @@ export function StationDetail({
   // Gauge: fills to the % of bank capacity, with a tick at 100% (the bank). Scale grows past 120% when over bank.
   const scale = Math.max(120, pct ?? 0);
   return (
-    <section id="panel" aria-live="polite" className="flex flex-col gap-3">
+    <section id="panel" className="flex flex-col gap-3">
       <Link href={backHref} scroll={false} className="-ml-1 flex min-h-11 w-fit items-center gap-1 rounded px-1 text-sm font-medium text-sky-800 hover:bg-sky-50 dark:text-sky-300 dark:hover:bg-slate-800 md:min-h-8">
         <ChevronLeftIcon /> {t.backToList}
       </Link>
@@ -60,7 +60,7 @@ export function StationDetail({
       ) : (
         <>
           {/* The one number that matters: how far from the bank, and which side. */}
-          <div className="border-b border-slate-200 pb-3 dark:border-slate-700">
+          <div aria-live="polite" className="border-b border-slate-200 pb-3 dark:border-slate-700">
             {gap != null ? (
               <p className="flex items-baseline gap-2">
                 <span className="text-4xl font-bold leading-none tabular-nums" style={{ color: tone(status) }}>{Math.abs(gap).toFixed(2)}</span>

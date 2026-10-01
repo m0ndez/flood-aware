@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { About } from "@/components/about";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { LangSync } from "@/components/lang-sync";
 import { CamPanel } from "@/components/cam-panel";
 import { FloatingSheet } from "@/components/floating-sheet";
 import { Legend } from "@/components/legend";
@@ -16,10 +17,10 @@ import { loadCameras } from "@/lib/cctv";
 import { floodDates } from "@/lib/gibs";
 import { dict, fmtTime, type Lang } from "@/lib/i18n";
 import { MAP_COOKIE, parseMapStyle } from "@/lib/mapstyle";
-import { REGIONS, type Region } from "@/lib/regions";
-import { parseIct } from "@/lib/status";
+import { REGIONS } from "@/lib/regions";
 import { countStatuses, headlineOf, worstOf } from "@/lib/verdict";
-import { statusOf, trendOf, type Status } from "@/lib/status";
+import { parseIct, trendOf } from "@/lib/status";
+import { groupKeyOf, makeHref, makeStatusFor, resolveView } from "@/lib/view-state";
 import { CORE_STATIONS, loadGraph, loadOverview, type Reading, type Station } from "@/lib/thaiwater";
 
 export default function Page({ searchParams }: PageProps<"/">) {
@@ -35,41 +36,16 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
   const lang: Lang = sp.lang === "en" ? "en" : "th";
   const t = dict[lang];
   const mapStyle = parseMapStyle(jar.get(MAP_COOKIE)?.value); // theme preference, see lib/mapstyle.ts
-  const wanted = Number(Array.isArray(sp.station) ? sp.station[0] : sp.station);
-
   // The station list is derived from the feed (Central and Eastern), so load it before validating ?station=.
   const { data, failed, now } = await loadOverview();
   const stations: Station[] = data?.stations ?? CORE_STATIONS;
-  // No (valid) ?station= means the list view; a station in the URL opens its detail.
-  const sel = stations.find((s) => s.id === wanted);
-  const selectedId = sel?.id ?? null;
-  // The open station decides the region; otherwise ?region=, otherwise Nonthaburi.
-  const regionParam = Array.isArray(sp.region) ? sp.region[0] : sp.region;
-  const region: Region = sel?.region ?? REGIONS.find((r) => r === regionParam) ?? "nonthaburi";
-  // A group is a list section (Upstream, a province...). Selecting one spotlights its stations on the map.
-  const groupKeyOf = (s: Station) => (s.provinceCode ? `p${s.provinceCode}` : s.group);
-  const inRegion = stations.filter((s) => s.region === region);
-  const groupParam = Array.isArray(sp.group) ? sp.group[0] : sp.group;
-  const activeGroup = inRegion.some((s) => groupKeyOf(s) === groupParam) ? (groupParam as string) : null;
-  // station=null is the list view. Everything is shareable through the URL; the active group rides along
-  // until a region change or a second tap on its header clears it.
-  const href = (id: number | null, opts: { lang?: Lang; cam?: string; region?: Region; group?: string | null } = {}) =>
-    `/?${[
-      id != null && `station=${id}`,
-      id == null && opts.region && opts.region !== "nonthaburi" && `region=${opts.region}`,
-      `lang=${opts.lang ?? lang}`,
-      opts.cam && `cam=${encodeURIComponent(opts.cam)}`,
-      (opts.group === undefined ? activeGroup : opts.group) && `group=${opts.group === undefined ? activeGroup : opts.group}`,
-    ]
-      .filter(Boolean)
-      .join("&")}`;
+  const { sel, selectedId, region, inRegion, activeGroup } = resolveView(sp, stations);
+  const href = makeHref(lang, activeGroup);
 
   const [graph, cameras] = await Promise.all([selectedId != null ? loadGraph(selectedId, stations) : Promise.resolve(null), loadCameras()]);
   const cam = cameras.find((c) => c.code === sp.cam); // only listed camera codes are honoured
   const byId = new Map<number, Reading>((data?.readings ?? []).map((r) => [r.id, r]));
-  // Never show green when we can't confirm: upstream failure forces every station to stale.
-  const statusFor = (r: Reading | undefined): Status =>
-    !r || failed ? "stale" : statusOf(r.situation, r.datetime, now);
+  const statusFor = makeStatusFor(failed, now);
 
   // The map shows the chosen region (plus the open station, wherever it is).
   const inView = stations.filter((s) => s.region === region || s.id === selectedId);
@@ -214,6 +190,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
       </FloatingSheet>
 
       <AutoRefresh />
+      <LangSync lang={lang} />
       <StationMap stations={mapStations} cameras={mapCameras} selectedId={selectedId} selectedCam={cam?.code ?? null} mapStyle={mapStyle} highlightIds={highlightIds} regionKey={region} floodDates={floodDates(now)} lang={lang} t={t} />
 
       <div className="absolute bottom-6 left-[28rem] z-20 hidden rounded-xl bg-white/90 dark:bg-slate-900/90 px-3 py-2 shadow-lg dark:ring-1 dark:ring-white/10 backdrop-blur-xl md:block">

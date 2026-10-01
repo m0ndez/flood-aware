@@ -31,6 +31,16 @@ Optional environment variables (server only, `.env.local`): `TMD_UID`, `TMD_UKEY
 
 **Before any real deployment:** every third-party source above needs its terms and permission checked, the camera sources in particular. This repository does not grant any rights to that data.
 
+## Deploying
+
+Runs on Vercel (`vercel.json` pins functions to Singapore, the closest region to the Thai sources). Needs Node 22 or newer. Things to know:
+
+- **Persistent caching:** the data layer uses `use cache: remote` so the 10-minute cache survives between serverless invocations. Without it every request re-downloads about 6 MB of feeds.
+- **Unreachable from cloud networks:** TMD radar and the Pak Kret cameras do not answer from Vercel. Radar falls back to RainViewer; the Mueang Nonthaburi cameras still work. Run locally to see everything.
+- **Public proxies:** `/api/cam/*` and `/api/radar/*` are rate limited per client (in memory, per instance) and send `s-maxage` so Vercel's CDN shares one frame between viewers. Add a WAF rule if traffic grows.
+- **Map tiles:** OpenStreetMap's tile policy allows light, attributed use only. Move the standard style to a hosted provider before real traffic (see `lib/mapstyle.ts`).
+- **RainViewer** is free for personal or educational use only: fine for this non-commercial portfolio, not for a product.
+
 ## Layout
 
-`app/` page and API routes (camera and radar proxies) · `components/` UI · `lib/` data layers and pure logic with tests · `PRODUCT.md` product context.
+`app/` page and API routes (camera and radar proxies) · `components/` UI · `lib/` data layers and pure logic with tests (parsers are tested against real frozen responses in `lib/fixtures/`) · `PRODUCT.md` product context.

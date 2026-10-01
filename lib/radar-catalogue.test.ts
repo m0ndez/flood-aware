@@ -49,3 +49,12 @@ test("pixel box is centred on the point and uses mercator rows", () => {
   const out = pixelBox(b, 100, 100, 40, 120, 0.5);
   assert.deepEqual(out, { x0: 100, y0: 0, x1: 100, y1: 0 });
 });
+
+import { STAMP_RE } from "./radar-catalogue.ts";
+
+test("the radar image route only ever accepts a frame stamp, never a path", () => {
+  assert.match("20261001_0430", STAMP_RE);
+  for (const bad of ["", "x", "../etc/passwd", "20261001_0430/../x", "20261001_043", "2026-10-01_0430", "20261001_0430\n", "20261001_0430.png"]) {
+    assert.doesNotMatch(bad, STAMP_RE, JSON.stringify(bad));
+  }
+});

@@ -93,19 +93,48 @@ const FRAME_TTL_MS: Record<Source, number> = { muni: 5_000, pakkret: 800 };
 const MAX_UPSTREAM = 6; // distinct cameras in flight; upstream can take 7-22 s per frame, so never queue unbounded work behind it
 const MAX_BYTES = 2_000_000;
 const MIN_BYTES = 500; // Pak Kret answers 200 with an empty body for ids it doesn't know
-// Pak Kret and the municipal server do not answer from every cloud network. Once a source has failed, skip it for
-// 30 s instead of making every player poll wait out the timeout again.
+// Pak Kret and the municipal server do not answer from every cloud network, and single cameras fail on their own.
+// A failed camera is skipped briefly, with exponential backoff (2 s, 4 s, 8 s ... capped at 30 s, reset by a success), so
+// a player does not wait out the full timeout on every poll of a dead camera, yet one transient hang (Pak Kret hangs
+// on about one request in four) costs seconds, not half a minute. Only when several DIFFERENT cameras of one source
+// fail inside the window is the whole source treated as down for 30 s: one flaky camera must not take its healthy
+// neighbours with it.
 const DOWN_MS = 30_000;
-const downUntil = new Map<Source, number>();
-const frames = new Map<string, { at: number; buf: ArrayBuffer }>();
-const pending = new Map<string, Promise<{ at: number; buf: ArrayBuffer }>>();
+const BACKOFF_BASE_MS = 2_000;
+const SOURCE_TRIP = 3;
+const camDown = new Map<string, { n: number; until: number }>(); // camera code -> consecutive failures, skip until
+const sourceDown = new Map<Source, number>();
+const recentFail = new Map<Source, Map<string, number>>(); // source -> camera code -> failure time
+const frames = new Map<string, Frame>();
+const pending = new Map<string, Promise<Frame>>();
 
-export type Frame = { at: number; buf: ArrayBuffer };
+const isDown = (cam: Camera, now: number) => (camDown.get(cam.code)?.until ?? 0) > now || (sourceDown.get(cam.source) ?? 0) > now;
+
+function noteFailure(cam: Camera, now: number) {
+  const n = (camDown.get(cam.code)?.n ?? 0) + 1;
+  camDown.set(cam.code, { n, until: now + Math.min(BACKOFF_BASE_MS * 2 ** (n - 1), DOWN_MS) });
+  const m = recentFail.get(cam.source) ?? new Map<string, number>();
+  m.set(cam.code, now);
+  for (const [code, t] of m) if (now - t > DOWN_MS) m.delete(code);
+  recentFail.set(cam.source, m);
+  if (m.size >= SOURCE_TRIP) sourceDown.set(cam.source, now + DOWN_MS);
+}
+
+// Test hook: module state outlives a test file's cases.
+export function resetCameraState() {
+  camDown.clear();
+  sourceDown.clear();
+  recentFail.clear();
+  frames.clear();
+  pending.clear();
+}
+
+export type Frame = { at: number; buf: ArrayBuffer; ttlS: number }; // ttlS: how long a shared CDN cache may reuse it
 export type FrameError = "not_found" | "busy" | "upstream";
 
 function frameRequest(cam: Camera, upstreamId: string): { url: string; timeout: number } | null {
   if (cam.source === "muni") {
-    return { url: `${MUNI}${MUNI_IMG}?width=800&height=450&cameraname=${encodeURIComponent(upstreamId)}`, timeout: 25_000 }; // the municipal server really takes 7-22 s per frame
+    return { url: `${MUNI}${MUNI_IMG}?width=800&height=450&cameraname=${encodeURIComponent(upstreamId)}`, timeout: 30_000 }; // the municipal server takes 7-24 s per frame; stay under the player's own 35 s
   }
   if (cam.source === "pakkret" && PAKKRET_ID_RE.test(upstreamId)) {
     return { url: `${PAKKRET_IMG}?t=${Date.now()}&name=${upstreamId}_thumb.jpg`, timeout: 6_000 }; // it stalls 20+ s now and then: give up early, the player keeps the last frame
@@ -121,7 +150,7 @@ export async function getFrame(code: string, n: number): Promise<Frame | { error
   if (!req) return { error: "not_found" };
 
   const key = `${code}/${n}`;
-  if ((downUntil.get(cam.source) ?? 0) > Date.now()) return { error: "upstream" };
+  if (isDown(cam, Date.now())) return { error: "upstream" };
   const hit = frames.get(key);
   if (hit && Date.now() - hit.at < FRAME_TTL_MS[cam.source]) return hit;
 
@@ -136,8 +165,10 @@ export async function getFrame(code: string, n: number): Promise<Frame | { error
       if (!res.ok || !/^image\/jpe?g/.test(type) || buf.byteLength < MIN_BYTES || buf.byteLength > MAX_BYTES) {
         throw new Error(`frame ${key}: bad upstream response (${res.status}, ${type}, ${buf.byteLength}B)`);
       }
-      const frame = { at: Date.now(), buf };
+      const frame: Frame = { at: Date.now(), buf, ttlS: Math.max(1, Math.round(FRAME_TTL_MS[cam.source] / 1000)) };
       frames.set(key, frame);
+      camDown.delete(cam.code); // recovered
+      recentFail.get(cam.source)?.delete(cam.code);
       return frame;
     })().finally(() => pending.delete(key));
     pending.set(key, p);
@@ -146,7 +177,7 @@ export async function getFrame(code: string, n: number): Promise<Frame | { error
     return await p;
   } catch (e) {
     console.error("frame fetch failed", e);
-    downUntil.set(cam.source, Date.now() + DOWN_MS);
+    noteFailure(cam, Date.now());
     return { error: "upstream" };
   }
 }

@@ -14,6 +14,10 @@ export type BaseLayer = { url: string; attribution: string; maxZoom: number; max
 //    attribution; a public product needs a check.
 //  - CARTO dark_all was tried first and dropped: it now answers 200 with an "API KEY REQUIRED" watermark tile, so a
 //    status-code check passes while the map is unusable. Stadia answers 401. Always look at a tile, not its status.
+// - OpenStreetMap standard tiles (tile.openstreetmap.org): allowed for light, attributed use under OSMF's tile usage
+//   policy, which forbids heavy traffic and can block a site that sends it. Fine for a low-traffic portfolio site.
+//   If traffic grows, switch "standard" to a hosted provider with a plan (MapTiler, Stadia, Thunderforest) or the
+//   Esri light-gray canvas that the dark style already uses.
 // Layers are listed bottom first; the labels layer sits on top.
 export const BASE_LAYERS: Record<MapStyle, BaseLayer[]> = {
   standard: [

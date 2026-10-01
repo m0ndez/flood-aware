@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { withTimeout } from "@/lib/abort";
 import { fmtClock, type Dict, type Lang } from "@/lib/i18n";
 
 // These sources only serve still frames (the municipal Milestone service has no video operation at all),
@@ -40,11 +41,10 @@ export function CamFrame({ code, n, label, gapMs, lang, t }: { code: string; n: 
           continue;
         }
         if (performance.now() > deadline) return void setPlaying(false);
+        const req = withTimeout(35_000, ctl.signal);
         try {
-          const res = await fetch(`/api/cam/${encodeURIComponent(code)}/${n}`, {
-            cache: "no-store",
-            signal: AbortSignal.any([ctl.signal, AbortSignal.timeout(35_000)]),
-          });
+          // No cache option: the route sends max-age=0, so the browser revalidates every poll while the CDN shares frames.
+          const res = await fetch(`/api/cam/${encodeURIComponent(code)}/${n}`, { signal: req.signal });
           if (!res.ok) throw new Error(String(res.status));
           const blob = await res.blob();
           if (ctl.signal.aborted) return;
@@ -59,6 +59,8 @@ export function CamFrame({ code, n, label, gapMs, lang, t }: { code: string; n: 
           if (ctl.signal.aborted) return;
           setRetrying(true); // keep the last frame on screen and say it is stale
           await sleep(Math.min(2000 * ++fails, 10_000), ctl.signal);
+        } finally {
+          req.done();
         }
       }
     })();

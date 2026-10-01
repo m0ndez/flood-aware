@@ -1,4 +1,5 @@
 import type { ImageOverlay, Map as LeafletMap } from "leaflet";
+import { withTimeout } from "@/lib/abort";
 import { pixelBox, STAMP_RE } from "@/lib/radar-catalogue";
 
 // TMD radar (radargis.tmd.go.th) through our own same-origin proxy, so the pixels are readable.
@@ -41,19 +42,28 @@ function hasEchoes(img: HTMLImageElement, bounds: Bounds): boolean {
 }
 
 export async function addTmdRadar(L: Leaflet, map: LeafletMap): Promise<{ layer: ImageOverlay; time: number; echoes: boolean }> {
-  const res = await fetch("/api/radar", { signal: AbortSignal.timeout(20_000) });
-  if (!res.ok) throw new Error(`radar meta: HTTP ${res.status}`);
-  const j = await res.json();
-  if (typeof j?.stamp !== "string" || !STAMP_RE.test(j.stamp) || typeof j.time !== "number" || !Array.isArray(j.bounds) || !isPoint(j.bounds[0]) || !isPoint(j.bounds[1])) {
+  const req = withTimeout(20_000);
+  let j: { stamp?: unknown; time?: unknown; bounds?: unknown } | null;
+  try {
+    const res = await fetch("/api/radar", { signal: req.signal });
+    if (!res.ok) throw new Error(`radar meta: HTTP ${res.status}`);
+    j = await res.json();
+  } finally {
+    req.done();
+  }
+  const stamp = j?.stamp;
+  const time = j?.time;
+  const raw = j?.bounds;
+  if (typeof stamp !== "string" || !STAMP_RE.test(stamp) || typeof time !== "number" || !Array.isArray(raw) || !isPoint(raw[0]) || !isPoint(raw[1])) {
     throw new Error("radar meta: bad shape");
   }
-  const bounds: Bounds = [j.bounds[0], j.bounds[1]];
-  const src = `/api/radar/${j.stamp}`;
+  const bounds: Bounds = [raw[0], raw[1]];
+  const src = `/api/radar/${stamp}`;
   const img = await load(src);
   const layer = L.imageOverlay(src, bounds, {
     opacity: 0.8,
     interactive: false,
     attribution: 'Radar &copy; <a href="https://www.tmd.go.th">TMD</a>',
   }).addTo(map);
-  return { layer, time: j.time, echoes: hasEchoes(img, bounds) };
+  return { layer, time, echoes: hasEchoes(img, bounds) };
 }
