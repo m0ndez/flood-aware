@@ -37,7 +37,7 @@ Runs on Vercel (`vercel.json` pins functions to Singapore, the closest region to
 
 - **Persistent caching:** the data layer uses `use cache: remote` so the 10-minute cache survives between serverless invocations. Without it every request re-downloads about 6 MB of feeds.
 - **Unreachable from cloud networks:** TMD radar and the Pak Kret cameras do not answer from Vercel. Radar falls back to RainViewer; the Mueang Nonthaburi cameras still work. Run locally to see everything.
-- **Public proxies:** `/api/cam/*` and `/api/radar/*` are rate limited per client (in memory, per instance) and send `s-maxage` so Vercel's CDN shares one frame between viewers. Add a WAF rule if traffic grows.
+- **Public proxies:** `/api/cam/*` and `/api/radar/*` have an in-memory per-client limiter (`lib/ratelimit.ts`), but **it does not hold on Vercel**: requests land on fresh serverless instances, and 260 rapid requests to production got no `429`. It works when self-hosted or run locally. On Vercel the real protection is the `s-maxage` header (one shared frame per viewer group) plus a Vercel Firewall rate-limit rule on `/api/cam/*`, which you need to add in the dashboard.
 - **Map tiles:** OpenStreetMap's tile policy allows light, attributed use only. Move the standard style to a hosted provider before real traffic (see `lib/mapstyle.ts`).
 - **RainViewer** is free for personal or educational use only: fine for this non-commercial portfolio, not for a product.
 

@@ -1,6 +1,7 @@
-// Fixed-window counter per key. In-memory, so each serverless instance counts on its own: it cannot stop a determined
-// flood, but it stops one client from turning a public proxy into a steady stream against a third party's small server,
-// and it is free. The real backstop is a CDN cache in front (see s-maxage on the proxy routes) and a Vercel WAF rule.
+// Fixed-window counter per key. In-memory, so each process counts on its own. That works for one long-lived server
+// (local, Docker, a VPS) but NOT on Vercel: measured on production, 260 rapid requests got no 429 because they landed
+// on different serverless instances. There the backstop is the CDN cache in front (s-maxage on the proxy routes) and a
+// Vercel Firewall rate-limit rule, which has to be configured in the dashboard.
 export function makeLimiter(limit: number, windowMs: number, now: () => number = Date.now) {
   const hits = new Map<string, { n: number; reset: number }>();
   return function check(key: string): { ok: true } | { ok: false; retryAfterS: number } {
