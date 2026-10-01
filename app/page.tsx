@@ -6,6 +6,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { LangSync } from "@/components/lang-sync";
 import { CamPanel } from "@/components/cam-panel";
 import { FloatingSheet } from "@/components/floating-sheet";
+import { NewsSection } from "@/components/news-section";
 import { Legend } from "@/components/legend";
 import { Verdict, headlineText } from "@/components/verdict";
 import { StationDetail } from "@/components/station-detail";
@@ -160,6 +161,11 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
       >
         {cam && <CamPanel cam={cam} closeHref={href(selectedId)} lang={lang} t={t} />}
         {!sel && headline && <Verdict counts={counts} headline={headline} area={t.region[region]} surround={surround} asOf={asOf} t={t} />}
+        {!sel && (
+          <Suspense fallback={null}>
+            <NewsSection now={now} lang={lang} t={t} />
+          </Suspense>
+        )}
         {sel ? (
           <StationDetail
             name={sel.name[lang]}

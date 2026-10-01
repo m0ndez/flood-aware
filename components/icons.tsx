@@ -28,3 +28,11 @@ export function TrendIcon({ dir, size = 16, className }: P & { dir: "rising" | "
     </svg>
   );
 }
+
+export function ExternalIcon({ size = 14, className }: P) {
+  return (
+    <svg width={size} height={size} className={`shrink-0 ${className ?? ""}`} {...base}>
+      <path d="M14 4h6v6M20 4 10.5 13.5M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+    </svg>
+  );
+}
