@@ -14,7 +14,8 @@ export type StationRow = {
   name: string;
   river: string;
   note?: string; // e.g. "Thai name only"
-  level: number | null;
+  level: number | null; // m above sea level: only a fallback when the gauge has no bank level
+  gap: number | null; // m to the bank, + below it, - above it
   status: Status;
   href: string;
 };
@@ -22,6 +23,14 @@ export type RegionTab = { key: Region; label: string; href: string; count: numbe
 
 const GROUPS: Group[] = ["nonthaburi", "upstream", "downstream", "nearby"];
 const worstRank = (rows: StationRow[]) => Math.max(0, ...rows.map((r) => severityRank(r.status)));
+
+// The one figure a row leads with: how far from the bank, and which side. Height above sea level can't be
+// compared between gauges (every bank sits at a different height), so it is only a fallback.
+function figure(r: StationRow, t: Dict): string {
+  if (r.status === "stale") return "–"; // a stale reading must not read as a current margin
+  if (r.gap != null) return (r.gap < 0 ? t.rowAbove : t.rowBelow).replace("{n}", Math.abs(r.gap).toFixed(2));
+  return r.level != null ? t.rowLevel.replace("{n}", r.level.toFixed(2)) : "–";
+}
 
 export function StationList({
   rows,
@@ -49,7 +58,11 @@ export function StationList({
       : [...Map.groupBy(rows, (r) => r.groupKey)]
           .map(([key, rs]) => ({ key, label: rs[0].province ?? key, rows: rs }))
           .sort((a, b) => worstRank(b.rows) - worstRank(a.rows) || a.label.localeCompare(b.label))
-  ).map((g) => ({ ...g, rows: [...g.rows].sort(bySeverity) }));
+  ).map((g) => {
+    // A river shared by every row is said once in the heading instead of on each row.
+    const rivers = new Set(g.rows.map((r) => r.river));
+    return { ...g, rows: [...g.rows].sort(bySeverity), river: rivers.size === 1 && g.rows.length > 1 ? [...rivers][0] : "" };
+  });
   const touch = "max-md:min-h-11";
   return (
     <section aria-labelledby="all">
@@ -76,9 +89,11 @@ export function StationList({
           // summary is invalid and screen readers swallow it. The pill is overlaid on the summary's right edge.
           <div key={g.key} className="relative mb-1">
             <details open={i === 0 || active || worstRank(g.rows) >= severityRank("critical") || g.rows.some((r) => r.id === selectedId)}>
-              <summary className={`flex cursor-pointer items-center py-2 pr-36 text-sm font-semibold text-slate-700 dark:text-slate-300 ${touch}`}>
+              <summary className={`flex cursor-pointer items-center py-2 pr-12 text-sm font-semibold text-slate-700 dark:text-slate-300 ${touch}`}>
                 <span>
-                  {g.label} <span className="font-normal tabular-nums text-slate-600 dark:text-slate-400">{g.rows.length}</span>
+                  {g.label}
+                  {g.river && <span className="font-normal text-slate-600 dark:text-slate-400"> · {g.river}</span>}{" "}
+                  <span className="font-normal tabular-nums text-slate-600 dark:text-slate-400">{g.rows.length}</span>
                 </span>
               </summary>
               <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white/70 dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800/70">
@@ -92,10 +107,12 @@ export function StationList({
                     >
                       <span className="min-w-0">
                         <span className="block font-medium">{r.name}</span>
-                        {(r.river || r.note) && <span className="block text-xs text-slate-600 dark:text-slate-400">{[r.river, r.note].filter(Boolean).join(" · ")}</span>}
+                        {((!g.river && r.river) || r.note) && (
+                          <span className="block text-xs text-slate-600 dark:text-slate-400">{[g.river ? "" : r.river, r.note].filter(Boolean).join(" · ")}</span>
+                        )}
                       </span>
                       <span className="flex shrink-0 flex-col items-end gap-0.5">
-                        {r.level != null && <span className="text-sm tabular-nums">{r.level.toFixed(2)} m</span>}
+                        <span className="text-sm tabular-nums">{figure(r, t)}</span>
                         <StatusBadge status={r.status} label={t.status[r.status]} />
                       </span>
                     </Link>
@@ -103,18 +120,19 @@ export function StationList({
                 ))}
               </ul>
             </details>
+            {/* One quiet icon per heading. Tapping it spotlights the group on the map; tapping again clears it. */}
             <Link
               href={groupHref(active ? null : g.key)}
               scroll={false}
               aria-current={active ? "true" : undefined}
               aria-label={`${g.label}: ${active ? t.clearHighlight : t.showOnMap}`}
-              className={`absolute right-0 top-1 flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium max-md:min-h-11 md:top-1.5 ${active ? "border-sky-700 bg-sky-700 text-white" : "border-slate-400 text-slate-800 hover:bg-slate-100 dark:border-slate-500 dark:text-slate-100 dark:hover:bg-slate-700"}`}
+              title={active ? t.clearHighlight : t.showOnMap}
+              className={`absolute right-0 top-0.5 grid size-11 place-items-center rounded-full md:top-0 md:size-9 ${active ? "bg-sky-700 text-white" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"}`}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">
                 <path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" />
                 <circle cx="12" cy="10" r="2.5" />
               </svg>
-              {active ? t.clearHighlight : t.showOnMap}
             </Link>
           </div>
         );

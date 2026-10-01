@@ -99,6 +99,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
         river: s.river[lang],
         note: lang === "en" && s.thaiOnly ? t.thaiNameOnly : undefined,
         level: r?.levelMsl ?? null,
+        gap: r?.bankM != null ? r.bankM - r.levelMsl : null, // + below the bank, - above it
         status: statusFor(r),
         href: href(s.id, { cam: cam?.code }),
       };
