@@ -8,7 +8,9 @@ import type { Dict } from "@/lib/i18n";
 // ponytail: stops after 10 minutes and while the tab is hidden, like the still-frame players, to spare a public relay.
 const MAX_SESSION_MS = 10 * 60_000;
 const CONNECT_TIMEOUT_MS = 25_000;
-type State = "loading" | "playing" | "failed" | "paused";
+const STALL_CHECK_MS = 3_000;
+const STALL_AFTER_CHECKS = 3; // 9 s without the video clock moving
+type State = "loading" | "playing" | "stalled" | "failed" | "paused";
 
 export function CamVideo({ src, label, t }: { src: string; label: string; t: Dict }) {
   const video = useRef<HTMLVideoElement>(null);
@@ -21,6 +23,14 @@ export function CamVideo({ src, label, t }: { src: string; label: string; t: Dic
     setState("loading");
     let hls: import("hls.js").default | null = null;
     let gone = false;
+    let mediaRetries = 0;
+    // A few DOH streams raise MEDIA_ERR_DECODE on the <video> itself, partway in, without hls.js ever calling it fatal.
+    // The documented cure is recoverMediaError(); after two goes the stream is called failed, not left frozen.
+    const onVideoError = () => {
+      if (hls && mediaRetries++ < 2) hls.recoverMediaError();
+      else setState("failed");
+    };
+    el.addEventListener("error", onVideoError);
     const stop = setTimeout(() => {
       el.pause();
       setState("paused");
@@ -40,6 +50,22 @@ export function CamVideo({ src, label, t }: { src: string; label: string; t: Dic
         el.play().catch(() => {});
       }
     };
+    // hls.js reports a buffer stall as non-fatal, and the <video> then just freezes on its last frame.
+    // If the clock has not moved for a while when it should be playing, say so and nudge the loader.
+    let lastTime = -1;
+    let still = 0;
+    const watchdog = setInterval(() => {
+      if (document.visibilityState === "hidden" || el.paused || el.ended) {
+        still = 0;
+        return;
+      }
+      still = el.currentTime === lastTime ? still + 1 : 0;
+      lastTime = el.currentTime;
+      if (still >= STALL_AFTER_CHECKS) {
+        setState((s) => (s === "playing" ? "stalled" : s));
+        hls?.startLoad();
+      }
+    }, STALL_CHECK_MS);
     el.addEventListener("playing", onPlaying);
     document.addEventListener("visibilitychange", onHidden);
     (async () => {
@@ -50,7 +76,6 @@ export function CamVideo({ src, label, t }: { src: string; label: string; t: Dic
       if (Hls.isSupported()) {
         hls = new Hls({ capLevelToPlayerSize: true });
         let netRetries = 0;
-        let mediaRetried = false;
         hls.on(Hls.Events.ERROR, (_e, d) => {
           if (!d.fatal) return; // stalls and single segment misses recover on their own
           if (d.type === Hls.ErrorTypes.NETWORK_ERROR && netRetries++ < 3) {
@@ -58,16 +83,13 @@ export function CamVideo({ src, label, t }: { src: string; label: string; t: Dic
             const retry = () => (d.details.startsWith("manifest") ? hls?.loadSource(src) : hls?.startLoad());
             setTimeout(retry, 1500 * netRetries);
           }
-          else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && !mediaRetried) {
-            mediaRetried = true;
-            hls?.recoverMediaError();
-          } else setState("failed");
+          else if (d.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRetries++ < 2) hls?.recoverMediaError();
+          else setState("failed");
         });
         hls.loadSource(src);
         hls.attachMedia(el);
       } else if (el.canPlayType("application/vnd.apple.mpegurl")) {
         el.src = src;
-        el.addEventListener("error", () => setState("failed"), { once: true });
       } else {
         return setState("failed");
       }
@@ -77,7 +99,9 @@ export function CamVideo({ src, label, t }: { src: string; label: string; t: Dic
       gone = true;
       clearTimeout(stop);
       clearTimeout(giveUp);
+      clearInterval(watchdog);
       el.removeEventListener("playing", onPlaying);
+      el.removeEventListener("error", onVideoError);
       document.removeEventListener("visibilitychange", onHidden);
       hls?.destroy();
       hls = null; // a queued retry then does nothing
@@ -93,7 +117,7 @@ export function CamVideo({ src, label, t }: { src: string; label: string; t: Dic
         <video ref={video} muted playsInline controls aria-label={label} className="h-full w-full" />
         {state !== "playing" && (
           <p role="status" className="absolute inset-0 grid place-items-center bg-slate-50/95 px-3 text-center text-sm text-slate-700 dark:bg-slate-800/95 dark:text-slate-300">
-            {state === "loading" ? t.camLoadingVideo : state === "failed" ? t.camVideoFailed : t.camPaused}
+            {state === "loading" ? t.camLoadingVideo : state === "failed" ? t.camVideoFailed : state === "stalled" ? t.camReconnecting : t.camPaused}
           </p>
         )}
       </div>

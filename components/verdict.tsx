@@ -9,7 +9,8 @@ export function headlineText(h: Headline, t: Dict): string {
     case "critical":
       return [n(v.critical, h.critical), h.watch > 0 ? n(v.watch, h.watch) : ""].filter(Boolean).join(" · ");
     case "watch":
-      return `${n(v.watch, h.watch)} · ${v.noCritical}`;
+      // With gauges we cannot confirm, "none over bank" would claim more than we know.
+      return `${n(v.watch, h.watch)} · ${h.stale > 0 ? v.noCriticalConfirmed : v.noCritical}`;
     case "allStale":
       return v.allStale;
     default:
@@ -24,13 +25,15 @@ export function Verdict({
   headline,
   area,
   surround,
+  surroundText,
   asOf,
   t,
 }: {
   counts: Counts; // what the headline is about
   headline: Headline;
   area: string;
-  surround: Counts | null; // wider set shown as a separate, labelled line (Nonthaburi view only)
+  surround: Counts | null; // wider set shown as a separate, labelled line (Nonthaburi and Bang Na views)
+  surroundText?: string; // the label for that line, when it is not the default klong one
   asOf: string | null;
   t: Dict;
 }) {
@@ -47,7 +50,7 @@ export function Verdict({
           </p>
         </div>
       </div>
-      {surround && <p className="mt-2 text-xs text-slate-700 dark:text-slate-300">{t.verdict.surround.replace("{n}", String(total(surround)))}</p>}
+      {surround && <p className="mt-2 text-xs text-slate-700 dark:text-slate-300">{(surroundText ?? t.verdict.surround).replace("{n}", String(total(surround)))}</p>}
       <ul className={`${surround ? "mt-1" : "mt-2"} flex flex-wrap gap-x-3 gap-y-1 text-sm`}>
         {SEVERITY_ORDER.filter((s) => list[s] > 0).map((s) => (
           <li key={s} className="flex items-center gap-1.5">

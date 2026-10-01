@@ -23,11 +23,11 @@ export function worstOf(c: Counts): Status {
 
 // "kind" is what the sentence says; the wording lives in i18n. "All normal" is only ever claimed for stations
 // we could confirm, and never when every station is stale.
-export type Headline = { kind: "critical" | "watch" | "allStale" | "allNormal"; critical: number; watch: number };
+export type Headline = { kind: "critical" | "watch" | "allStale" | "allNormal"; critical: number; watch: number; stale: number };
 
 export function headlineOf(c: Counts): Headline | null {
   if (total(c) === 0) return null;
-  const base = { critical: c.critical, watch: c.watch };
+  const base = { critical: c.critical, watch: c.watch, stale: c.stale };
   if (c.critical > 0) return { kind: "critical", ...base };
   if (c.watch > 0) return { kind: "watch", ...base };
   if (c.stale === total(c)) return { kind: "allStale", ...base };

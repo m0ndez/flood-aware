@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test, { afterEach, beforeEach } from "node:test";
-import { DOH_HLS_RE, getFrame, loadCameras, resetCameraState } from "./cctv.ts";
+import { DOH_HLS_RE, ITIC_HLS_RE, getFrame, loadCameras, resetCameraState } from "./cctv.ts";
 
 const realFetch = globalThis.fetch;
 const realError = console.error;
@@ -191,18 +191,35 @@ test("never queues unbounded work behind a slow upstream: the 7th distinct camer
   assert.ok((await Promise.all(inflight)).every(ok));
 });
 
-test("DOH cameras are played by the browser: valid relay playlists, never fetched by our proxy", async () => {
-  const doh = (await loadCameras()).filter((c) => c.source === "doh");
-  assert.equal(doh.length, 5);
-  for (const c of doh) {
-    assert.ok(c.hls && DOH_HLS_RE.test(c.hls), `${c.code}: ${c.hls}`);
-    assert.ok(c.lat > 13.7 && c.lat < 14.1 && c.lon > 100.3 && c.lon < 100.8, `${c.code} is near Nonthaburi`);
-  }
-  assert.equal(new Set(doh.map((c) => c.code)).size, 5);
+test("HLS cameras are played by the browser: valid relay playlists, never fetched by our proxy", async () => {
+  const hls = (await loadCameras()).filter((c) => c.hls);
+  const doh = hls.filter((c) => c.source === "doh");
+  const itic = hls.filter((c) => c.source === "itic");
+  assert.ok(doh.length >= 28 && itic.length >= 40, `${doh.length} doh, ${itic.length} itic`);
+  for (const c of doh) assert.ok(DOH_HLS_RE.test(c.hls!), `${c.code}: ${c.hls}`);
+  for (const c of itic) assert.ok(ITIC_HLS_RE.test(c.hls!), `${c.code}: ${c.hls}`);
+  for (const c of hls) assert.ok(c.lat > 12 && c.lat < 16 && c.lon > 99 && c.lon < 103.5, `${c.code} is in Central or Eastern Thailand`);
+  assert.ok(!hls.some((c) => c.code === "DOH-PER-7-024" || c.code === "DOH-PER-8-012"), "streams that fail to decode stay out");
+  assert.ok(!hls.some((c) => c.hls!.includes("tempsus")), "the suspended-stream placeholder must never be listed as a camera");
+  assert.equal(new Set(hls.map((c) => c.hls)).size, hls.length, "two cameras must never share one stream");
+  assert.equal(new Set((await loadCameras()).map((c) => c.code)).size, (await loadCameras()).length, "camera codes are unique");
   stub(() => jpg());
-  assert.equal(err(await getFrame("DOH-PER-9-026", 0)), "not_found", "the frame proxy must not become an open relay for the DOH host");
+  assert.equal(err(await getFrame("DOH-PER-9-026", 0)), "not_found", "the frame proxy must not become an open relay for the relay hosts");
+  assert.equal(err(await getFrame(itic[0].code, 0)), "not_found");
   assert.equal(calls.length, 0);
   for (const bad of ["http://camerai1.iticfoundation.org/pass/1.2.3.4:1935/Phase9/PER_9_026_IN.stream/playlist.m3u8", "https://camerai1.iticfoundation.org.evil.com/pass/1.2.3.4:1935/Phase9/PER_9_026_IN.stream/playlist.m3u8", "https://evil.com/pass/1.2.3.4/Phase9/PER_9.stream/playlist.m3u8"]) {
     assert.ok(!DOH_HLS_RE.test(bad), bad);
   }
+  assert.ok(!ITIC_HLS_RE.test("https://camera1.iticfoundation.org.evil.com/hls/10.8.0.21_8002.m3u8"));
+  assert.ok(!ITIC_HLS_RE.test("http://camera1.iticfoundation.org/hls/10.8.0.21_8002.m3u8"));
+});
+
+test("every Pak Kret camera id is unique, well formed and inside Pak Kret", async () => {
+  const pk = (await loadCameras()).filter((c) => c.source === "pakkret");
+  assert.equal(pk.length, 52);
+  for (const c of pk) {
+    assert.match(c.code, /^CAMPK\d{3}$/);
+    assert.ok(c.lat > 13.85 && c.lat < 13.97 && c.lon > 100.45 && c.lon < 100.6, `${c.code} is in Pak Kret`);
+  }
+  assert.equal(new Set(pk.map((c) => c.code)).size, 52);
 });

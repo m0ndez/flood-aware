@@ -17,9 +17,10 @@ export type StationRow = {
   level: number | null; // m above sea level: only a fallback when the gauge has no bank level
   gap: number | null; // m to the bank, + below it, - above it
   status: Status;
+  mark?: boolean; // gap is the margin to a BMA mark, not to a bank
   href: string;
 };
-export type RegionTab = { key: Region; label: string; href: string; count: number };
+export type RegionTab = { key: Region; label: string; href: string; count?: number }; // undefined = not known yet, so no number is shown
 
 const GROUPS: Group[] = ["nonthaburi", "upstream", "downstream", "nearby"];
 const worstRank = (rows: StationRow[]) => Math.max(0, ...rows.map((r) => severityRank(r.status)));
@@ -28,7 +29,8 @@ const worstRank = (rows: StationRow[]) => Math.max(0, ...rows.map((r) => severit
 // compared between gauges (every bank sits at a different height), so it is only a fallback.
 function figure(r: StationRow, t: Dict): string {
   if (r.status === "stale") return "–"; // a stale reading must not read as a current margin
-  if (r.gap != null) return (r.gap < 0 ? t.rowAbove : t.rowBelow).replace("{n}", Math.abs(r.gap).toFixed(2));
+  // BMA amber starts AT its mark, so a margin of 0.00 reads as "above" it, not "0.00 below".
+  if (r.gap != null) return (r.mark ? (r.gap <= 0 ? t.bma.rowAbove : t.bma.rowBelow) : r.gap < 0 ? t.rowAbove : t.rowBelow).replace("{n}", Math.abs(r.gap).toFixed(2));
   return r.level != null ? t.rowLevel.replace("{n}", r.level.toFixed(2)) : "–";
 }
 
@@ -39,6 +41,7 @@ export function StationList({
   selectedId,
   activeGroup,
   groupHref,
+  coverage,
   t,
 }: {
   rows: StationRow[];
@@ -47,6 +50,7 @@ export function StationList({
   selectedId: number | null;
   activeGroup: string | null;
   groupHref: (key: string | null) => string; // null clears the highlight
+  coverage?: string; // what this area does and does not monitor, when it is thin (see lib/coverage.ts)
   t: Dict;
 }) {
   // Nonthaburi keeps its hand-made role order; Central and Eastern go worst province first, so red is never
@@ -76,11 +80,12 @@ export function StationList({
             aria-current={r.key === region ? "page" : undefined}
             className={`flex items-center rounded-full border px-3 py-1 text-sm font-medium ${touch} ${r.key === region ? "border-sky-700 bg-sky-700 text-white" : "border-slate-400 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
           >
-            {r.label}&nbsp;<span className="tabular-nums opacity-80">{r.count}</span>
+            {r.label}{r.count != null && <>&nbsp;<span className="tabular-nums opacity-80">{r.count}</span></>}
           </Link>
         ))}
       </nav>
       {region !== "nonthaburi" && <p className="mb-2 text-xs text-slate-700 dark:text-slate-300">{t.regionNote}</p>}
+      {coverage && <p className="mb-2 text-xs font-medium text-slate-800 dark:text-slate-200">{coverage}</p>}
       {rows.length === 0 && <p className="text-sm text-slate-700 dark:text-slate-300">{t.noRegionStations}</p>}
       {groups.map((g, i) => {
         const active = g.key === activeGroup;

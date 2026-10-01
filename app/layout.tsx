@@ -8,8 +8,8 @@ const font = Noto_Sans_Thai({
 });
 
 export const metadata: Metadata = {
-  title: "เฝ้าระวังน้ำท่วม นนทบุรี · Nonthaburi Flood Monitor",
-  description: "ระดับน้ำและปริมาณฝนล่าสุดใกล้จังหวัดนนทบุรี / Latest river level and rainfall around Nonthaburi",
+  title: "เฝ้าระวังน้ำท่วม ภาคกลาง–ตะวันออก · Flood Aware",
+  description: "ระดับน้ำ ปริมาณฝน เรดาร์ และกล้อง ภาคกลางและภาคตะวันออก เริ่มจากนนทบุรี / River levels, rain, radar and cameras for Central and Eastern Thailand, starting with Nonthaburi",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

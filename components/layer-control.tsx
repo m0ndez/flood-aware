@@ -13,6 +13,7 @@ export function LayerControl({
   radar,
   flood,
   cctv,
+  roads,
   hasCctv,
   mapStyle,
   onMapStyle,
@@ -27,6 +28,7 @@ export function LayerControl({
   radar: Toggle;
   flood: Toggle;
   cctv: Toggle;
+  roads: Toggle;
   hasCctv: boolean;
   mapStyle: MapStyle;
   onMapStyle: (v: MapStyle) => void;
@@ -107,6 +109,9 @@ export function LayerControl({
             <input type="checkbox" className="size-6" checked={cctv.checked} onChange={(e) => cctv.set(e.target.checked)} /> {t.layerCctv}
           </label>
         )}
+        <label className={box}>
+          <input type="checkbox" className="size-6" checked={roads.checked} onChange={(e) => roads.set(e.target.checked)} /> {t.roads.layer}
+        </label>
       </fieldset>
       <p aria-live="polite" className={`${message ? "" : "sr-only"} max-w-64 rounded-lg bg-white/90 dark:bg-slate-900/90 px-2.5 py-1 text-xs text-slate-800 dark:text-slate-100 shadow dark:ring-1 dark:ring-white/10 backdrop-blur-xl`}>
         {message}

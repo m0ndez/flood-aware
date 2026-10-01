@@ -1,4 +1,4 @@
-import { pickDerived, regionOfProvince, type Candidate } from "./regions.ts";
+import { pickDerived, regionOf, type Candidate } from "./regions.ts";
 import { isStale } from "./status.ts";
 import { CORE_STATIONS, type Bi, type Graph, type Point, type Rain, type Reading, type Station } from "./stations.ts";
 
@@ -98,6 +98,8 @@ export function parseOverview(data: unknown, now: number): { readings: Reading[]
   const cands: Candidate[] = rows.map((r) => ({
     id: r.reading.id,
     provinceCode: r.provinceCode,
+    lat: r.reading.lat,
+    lon: r.reading.lon,
     isKey: r.isKey,
     situation: r.reading.situation,
     fresh: !isStale(r.reading.datetime, now),
@@ -107,7 +109,7 @@ export function parseOverview(data: unknown, now: number): { readings: Reading[]
   const readings: Reading[] = [];
   for (const r of rows) {
     const id = r.reading.id;
-    const region = regionOfProvince(r.provinceCode);
+    const region = regionOf(r.provinceCode, r.reading.lat, r.reading.lon);
     if (derivedIds.has(id) && region && r.nameTh) {
       stations.push({
         id,

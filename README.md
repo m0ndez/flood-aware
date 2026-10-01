@@ -1,6 +1,8 @@
-# Nonthaburi Flood Monitor
+# Flood Aware: Central & Eastern Thailand
 
-A public, read-only flood dashboard on one fullscreen map: river and canal levels against bank level, rain, forecasts, rain radar, satellite flood extent and live camera frames. Thai first (`?lang=en` for English). It starts on Nonthaburi and extends to the Central and Eastern provinces around it.
+(Started as the Nonthaburi Flood Monitor; the repo and URL are `flood-aware`.)
+
+A public, read-only flood dashboard on one fullscreen map: river and canal levels against bank level, rain, forecasts, rain radar, satellite flood extent and live camera frames. Thai first (`?lang=en` for English). It starts on Nonthaburi and covers Bang Na–Samut Prakan and the Central and Eastern provinces around it. It does not cover the north, northeast or south.
 
 **It is a personal portfolio/demo, not an official warning service.** Stale, missing or failed data is shown as stale, never as normal. For real warnings follow the authorities (e.g. tmd.go.th).
 
@@ -28,7 +30,9 @@ Optional environment variables (server only, `.env.local`): `TMD_UID`, `TMD_UKEY
 | Flood extent | NASA GIBS (MODIS) | About 250 m, a day old, cloud shows as grey |
 | Base maps | OpenStreetMap, Esri World Imagery and Dark Gray | Attribution is shown on the map |
 | News | RSS feeds of Thai PBS, Thairath, Matichon, Khaosod, Thai Post, The Standard, The Bangkok Insight, Bangkok Post | Headline, outlet and link only, never article text or images. Thai headlines are not translated. Keyword filter, so it can miss or include stories. Press reports, not official bulletins; official bodies are plain links. Daily News skipped (its robots.txt disallows feeds) |
-| Cameras | Nonthaburi City Municipality, Pak Kret municipality, Department of Highways (via iTIC Foundation, listed by Longdo Traffic) | Informal public feeds with no stated terms. Municipal and Pak Kret are still frames through our proxy; the 5 Highways road cameras are live HLS video played by the browser (`hls.js`) straight from the iTIC relay, so they cost our server nothing |
+| Bang Na canals, pumps and gates | BMA Drainage and Sewerage Dept. (weather.bangkok.go.th/Klongmap/GetDataForUpdate) | Undocumented official endpoint, no stated terms: **get BMA's permission before a public launch**. About 2 MB and 5 s, so it is trimmed and cached on the server. BMA's "critical" mark is a canal's operating level, so these stations show amber at most and never count as "over bank". No history chart. The tide table in the same response is not shown: it does not say where it is measured |
+| Flooded roads | Longdo Traffic / iTIC event feed (event.longdo.com/feed/json) | Reports from drivers and agencies, not measurements. Only reports that have not ended and started within 48 h; reporter handles are never republished |
+| Cameras | Nonthaburi City Municipality, Pak Kret municipality, Department of Highways (via iTIC Foundation, listed by Longdo Traffic) | Informal public feeds with no stated terms. Municipal (26 stations, 36 cameras) and Pak Kret (all 52 cameras on the operator's viewer, most of them junctions) are still frames through our proxy; about 75 Highways and iTIC cameras (Nonthaburi, Bang Na, Samut Prakan, Ayutthaya, Nakhon Pathom, Chachoengsao and others) are live HLS video played by the browser (`hls.js`) straight from the iTIC relay, so they cost our server nothing. Most are road cameras. The 83 Chonburi cameras in Longdo's list are left out because they all point at one placeholder loop, and two Highways streams that fail to decode are left out too |
 
 **Before any real deployment:** every third-party source above needs its terms and permission checked, the camera sources in particular. This repository does not grant any rights to that data.
 

@@ -16,8 +16,8 @@ test("severity ranks critical > watch > stale > normal (unknown is worse than co
 });
 
 test("headline: critical wins and mentions watch; watch says none over bank", () => {
-  assert.deepEqual(headlineOf(c(2, 5, 1, 3)), { kind: "critical", critical: 2, watch: 5 });
-  assert.deepEqual(headlineOf(c(0, 2, 0, 12)), { kind: "watch", critical: 0, watch: 2 });
+  assert.deepEqual(headlineOf(c(2, 5, 1, 3)), { kind: "critical", critical: 2, watch: 5, stale: 1 });
+  assert.deepEqual(headlineOf(c(0, 2, 0, 12)), { kind: "watch", critical: 0, watch: 2, stale: 0 });
 });
 
 test("headline never says all normal when nothing could be confirmed", () => {

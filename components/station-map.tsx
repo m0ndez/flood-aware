@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { LayerControl } from "@/components/layer-control";
 import { addMapTools, type ToolLabels } from "@/components/map-tools";
-import { useBasemap, useCameraMarkers, useFloodLayer, usePanToSelected, useRadarLayer, useRegionFit, useSpotlightFit, useStationMarkers, viewPadding } from "@/components/map-hooks";
-import type { MapCamera, MapHandle, MapStation } from "@/components/map-types";
+import { useBasemap, useCameraMarkers, useFloodLayer, usePanToSelected, useRadarLayer, useRegionFit, useRoadMarkers, useSpotlightFit, useStationMarkers, viewPadding } from "@/components/map-hooks";
+import type { MapCamera, MapHandle, MapRoad, MapStation } from "@/components/map-types";
 import type { Dict, Lang } from "@/lib/i18n";
 import { MAP_COOKIE, type MapStyle } from "@/lib/mapstyle";
 
-export type { MapCamera, MapStation } from "@/components/map-types";
+export type { MapCamera, MapRoad, MapStation } from "@/components/map-types";
 
 const toolLabels = (t: Dict): ToolLabels => ({
   locate: t.toolLocate,
@@ -31,6 +31,8 @@ const toolLabels = (t: Dict): ToolLabels => ({
 export function StationMap({
   stations,
   cameras,
+  roads,
+  roadsDefaultOn,
   selectedId,
   selectedCam,
   mapStyle,
@@ -42,6 +44,8 @@ export function StationMap({
 }: {
   stations: MapStation[];
   cameras: MapCamera[];
+  roads: MapRoad[]; // flooded-road reports, already capped by the caller
+  roadsDefaultOn: boolean;
   selectedId: number | null;
   selectedCam: string | null;
   mapStyle: MapStyle; // from the "map" cookie, read on the server
@@ -71,6 +75,10 @@ export function StationMap({
   const [radar, setRadar] = useState(false);
   const [flood, setFlood] = useState(false);
   const [cctv, setCctv] = useState(selectedCam != null);
+  // The default follows the view (on in Bang Na), and a manual toggle holds until the view changes.
+  const [roadsPick, setRoadsPick] = useState<{ region: string; on: boolean } | null>(null);
+  const roadsOn = roadsPick?.region === regionKey ? roadsPick.on : roadsDefaultOn;
+  const setRoadsOn = (on: boolean) => setRoadsPick({ region: regionKey, on });
   const [floodDate, setFloodDate] = useState(floodDates[0] ?? "");
 
   useEffect(() => {
@@ -83,7 +91,7 @@ export function StationMap({
       // Fullscreen map: wheel zoom is expected, and the zoom control moves out from under the floating UI.
       const map = L.map(el.current, { zoomControl: false }).setView([13.9, 100.5], 10);
       L.control.zoom({ position: "bottomright" }).addTo(map);
-      mapRef.current = { L, map, layer: L.layerGroup().addTo(map), camLayer: L.layerGroup().addTo(map) };
+      mapRef.current = { L, map, layer: L.layerGroup().addTo(map), camLayer: L.layerGroup().addTo(map), roadLayer: L.layerGroup().addTo(map) };
       // The container grows when streamed panels (e.g. forecast) land; Leaflet must re-measure.
       ro = new ResizeObserver(() => map.invalidateSize());
       ro.observe(el.current);
@@ -103,6 +111,7 @@ export function StationMap({
   useBasemap(mapRef, ready, style);
   useStationMarkers(mapRef, ready, { stations, selectedId, highlightIds, open });
   useCameraMarkers(mapRef, ready, { cctv, cameras, selectedCam, zoom, t, open });
+  useRoadMarkers(mapRef, ready, { on: roadsOn, roads, t });
   useRegionFit(mapRef, ready, stations, regionKey);
   useSpotlightFit(mapRef, ready, stations, highlightIds);
   usePanToSelected(mapRef, ready, stations, selectedId);
@@ -139,6 +148,7 @@ export function StationMap({
         radar={{ checked: radar, set: setRadar }}
         flood={{ checked: flood, set: setFlood }}
         cctv={{ checked: cctv, set: setCctv }}
+        roads={{ checked: roadsOn, set: setRoadsOn }}
         hasCctv={hasCams}
         mapStyle={style}
         onMapStyle={pickStyle}

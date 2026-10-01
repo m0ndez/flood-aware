@@ -1,0 +1,423 @@
+{
+ "waterStation": [
+  {
+   "water_id": "48",
+   "station_name": "ส.บางนา",
+   "station_name_en": "Khlong Bang Na",
+   "station_type_id": 2,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 48,
+    "latitude": 13.67482,
+    "longitude": 100.58775,
+    "warning": -0.2,
+    "critical": 0,
+    "left_bank": 0.3,
+    "right_bank": 2.8,
+    "bed_bank": -3,
+    "water_name": "สถานีสูบน้ำ บางนา"
+   },
+   "water_level_last": {
+    "water_id": 48,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -1.16,
+    "max_in_day": -1.16,
+    "max_in_yesterday": -1.33,
+    "wl_out01": 0.23,
+    "max_out01_day": 1.69
+   }
+  },
+  {
+   "water_id": "44",
+   "station_name": "ส.คลองเตย",
+   "station_name_en": "Khlong Toei",
+   "station_type_id": 2,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 44,
+    "latitude": 13.70635,
+    "longitude": 100.58779,
+    "warning": -0.4,
+    "critical": -0.2,
+    "left_bank": 2.8,
+    "right_bank": 2.8,
+    "bed_bank": -3,
+    "water_name": "สถานีสูบน้ำ คลองเตย"
+   },
+   "water_level_last": {
+    "water_id": 44,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -1.92,
+    "max_in_day": -1.24,
+    "max_in_yesterday": -1.47,
+    "wl_out01": 0.37,
+    "max_out01_day": 1.74
+   }
+  },
+  {
+   "water_id": "50",
+   "station_name": "ส.คลองสำโรง",
+   "station_name_en": "Khlong Samrong",
+   "station_type_id": 2,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 50,
+    "latitude": 13.64855,
+    "longitude": 100.59523,
+    "warning": 0.7,
+    "critical": 0.8,
+    "left_bank": 1.98,
+    "right_bank": 1.98,
+    "bed_bank": -2,
+    "water_name": "สถานีสูบน้ำ คลองสำโรง"
+   },
+   "water_level_last": {
+    "water_id": 50,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -0.03,
+    "max_in_day": -0.03,
+    "max_in_yesterday": -0.05,
+    "wl_out01": 0.07,
+    "max_out01_day": 1.67
+   }
+  },
+  {
+   "water_id": "43",
+   "station_name": "ส.พระโขนง",
+   "station_name_en": "Khraw Phra Khanong",
+   "station_type_id": 2,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 43,
+    "latitude": 13.70901,
+    "longitude": 100.59503,
+    "warning": -0.2,
+    "critical": -0.1,
+    "left_bank": 0.15,
+    "right_bank": 2.8,
+    "bed_bank": -2.5,
+    "water_name": "สถานีสูบน้ำ พระโขนง"
+   },
+   "water_level_last": {
+    "water_id": 43,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -0.9,
+    "max_in_day": -0.62,
+    "max_in_yesterday": -0.5,
+    "wl_out01": 0.62,
+    "max_out01_day": 1.88
+   }
+  },
+  {
+   "water_id": "256",
+   "station_name": "ปตร.ไม้ปลายคลองบางนา",
+   "station_name_en": "Khlong Bang Na Water Gate",
+   "station_type_id": 3,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 256,
+    "latitude": 13.6594,
+    "longitude": 100.64935,
+    "warning": 0.5,
+    "critical": 0.6,
+    "left_bank": 1,
+    "right_bank": 1,
+    "bed_bank": -2,
+    "water_name": "จุดวัดคลองบางนา ตอนซอยบางนา-ตราด 56"
+   },
+   "water_level_last": {
+    "water_id": 256,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -0.32,
+    "max_in_day": -0.27,
+    "max_in_yesterday": -0.01,
+    "wl_out01": -99,
+    "max_out01_day": null
+   }
+  },
+  {
+   "water_id": "196",
+   "station_name": "ค.บางนางจีน ถ.สุขุมวิท 101/1",
+   "station_name_en": "Khlong Bang Nang Chin, Thanon Sukhumvit 101/1",
+   "station_type_id": 3,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 196,
+    "latitude": 13.68443,
+    "longitude": 100.61107,
+    "warning": -0.2,
+    "critical": 0,
+    "left_bank": 0,
+    "right_bank": 0,
+    "bed_bank": -2.12,
+    "water_name": "จุดวัดคลองบางนางจีน ตอนถนนสุขุมวิท 101/1"
+   },
+   "water_level_last": {
+    "water_id": 196,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -1.11,
+    "max_in_day": -0.61,
+    "max_in_yesterday": -0.72,
+    "wl_out01": -99,
+    "max_out01_day": null
+   }
+  },
+  {
+   "water_id": "29",
+   "station_name": "ปตร.แสนแสบ-บางชัน",
+   "station_name_en": "Khlong Saen Saep Water Gate, Bang Chan",
+   "station_type_id": 3,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 29,
+    "latitude": 13.7972,
+    "longitude": 100.70458,
+    "warning": 0.4,
+    "critical": 0.5,
+    "left_bank": 0.8,
+    "right_bank": 0.9,
+    "bed_bank": -4.74,
+    "water_name": "ประตูระบายน้ำ คลองแสนแสบ ตอนบางชัน"
+   },
+   "water_level_last": {
+    "water_id": 29,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": 0.73,
+    "max_in_day": 0.8,
+    "max_in_yesterday": 0.84,
+    "wl_out01": 1.1,
+    "max_out01_day": 1.1
+   }
+  },
+  {
+   "water_id": "30",
+   "station_name": "ปตร.ลาดพร้าว",
+   "station_name_en": "Khlong Lat Phrao Water Gate",
+   "station_type_id": 3,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 30,
+    "latitude": 13.79446,
+    "longitude": 100.58957,
+    "warning": 0.2,
+    "critical": 0.4,
+    "left_bank": 0.8,
+    "right_bank": 0.9,
+    "bed_bank": -2.16,
+    "water_name": "ประตูระบายน้ำ คลองลาดพร้าว"
+   },
+   "water_level_last": {
+    "water_id": 30,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": 0.21,
+    "max_in_day": 0.37,
+    "max_in_yesterday": 0.33,
+    "wl_out01": 0.41,
+    "max_out01_day": 0.46
+   }
+  },
+  {
+   "water_id": "64",
+   "station_name": "ค.ประเวศฯ-สนข.ลาดกระบัง",
+   "station_name_en": "Khlong Prawet Burirom, Lat Krabang District Office",
+   "station_type_id": 1,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 64,
+    "latitude": 13.72396,
+    "longitude": 100.78399,
+    "warning": 0.4,
+    "critical": 0.6,
+    "left_bank": 1.85,
+    "right_bank": 1.97,
+    "bed_bank": -2,
+    "water_name": "จุดวัดคลองประเวศบุรีรมย์ ตอน รพ.ลาดกระบัง"
+   },
+   "water_level_last": {
+    "water_id": 64,
+    "site_timestamp": "/Date(1790872800000)/",
+    "wl_in": 0.98,
+    "max_in_day": 0.99,
+    "max_in_yesterday": 0.99,
+    "wl_out01": -99,
+    "max_out01_day": null
+   }
+  },
+  {
+   "water_id": "169",
+   "station_name": "ค.แสนแสบ ซ.สมคิด",
+   "station_name_en": "Khlong Saen Saep, Soi Somkid",
+   "station_type_id": 1,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 169,
+    "latitude": 13.74846,
+    "longitude": 100.54583,
+    "warning": 0,
+    "critical": 0.1,
+    "left_bank": 1.85,
+    "right_bank": 1.97,
+    "bed_bank": -3,
+    "water_name": "จุดวัดคลองแสนแสบ ตอนซอยสมคิด"
+   },
+   "water_level_last": {
+    "water_id": 169,
+    "site_timestamp": "/Date(1774234200000)/",
+    "wl_in": -0.27,
+    "max_in_day": 2,
+    "max_in_yesterday": -0.16,
+    "wl_out01": -99,
+    "max_out01_day": null
+   }
+  },
+  {
+   "water_id": "149",
+   "station_name": "ค.ตาหนัง  ถ.ลาดพร้าว",
+   "station_name_en": "Khlong Ta Nang, Thanon Lat Phrao",
+   "station_type_id": 2,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 149,
+    "latitude": 13.76725,
+    "longitude": 100.64345,
+    "warning": -0.2,
+    "critical": 0,
+    "left_bank": 0.3,
+    "right_bank": 0.3,
+    "bed_bank": -1.76,
+    "water_name": "จุดวัดคลองตาหนัง ตอนถนนลาดพร้าว"
+   },
+   "water_level_last": {
+    "water_id": 149,
+    "site_timestamp": "/Date(1780981800000)/",
+    "wl_in": -2,
+    "max_in_day": 1,
+    "max_in_yesterday": 0,
+    "wl_out01": -99,
+    "max_out01_day": null
+   }
+  },
+  {
+   "water_id": "237",
+   "station_name": "ค.บางนา  ถ.สุขุมวิท",
+   "station_name_en": "Khlong Bang Na, Thanon Sukhumvit",
+   "station_type_id": 1,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 237,
+    "latitude": 13.66948,
+    "longitude": 100.60535,
+    "warning": 0.5,
+    "critical": 0.7,
+    "left_bank": 0.6,
+    "right_bank": 0.5,
+    "bed_bank": -2.34,
+    "water_name": "จุดวัดคลองบางนา ตอนถนนสุขุมวิท"
+   },
+   "water_level_last": {
+    "water_id": 237,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -1.03,
+    "max_in_day": -0.97,
+    "max_in_yesterday": -0.9,
+    "wl_out01": -99,
+    "max_out01_day": null
+   }
+  },
+  {
+   "water_id": "66",
+   "station_name": "ส.บึงหนองบอน",
+   "station_name_en": "Bueng Nong Bon Pumping Station",
+   "station_type_id": 2,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 66,
+    "latitude": 13.69479,
+    "longitude": 100.6535,
+    "warning": -0.1,
+    "critical": 0,
+    "left_bank": 1.98,
+    "right_bank": 1.98,
+    "bed_bank": -5,
+    "water_name": "จุดวัดบึงหนองบอน"
+   },
+   "water_level_last": {
+    "water_id": 66,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -4.36,
+    "max_in_day": -4.04,
+    "max_in_yesterday": -4.14,
+    "wl_out01": -0.86,
+    "max_out01_day": -0.86
+   }
+  },
+  {
+   "water_id": "92",
+   "station_name": "ส.คลองมอญ",
+   "station_name_en": "Khlong Mon",
+   "station_type_id": 2,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 92,
+    "latitude": 13.74703,
+    "longitude": 100.48489,
+    "warning": 0.8,
+    "critical": 0.9,
+    "left_bank": 1,
+    "right_bank": 3,
+    "bed_bank": -1.85,
+    "water_name": "สถานีสูบน้ำ คลองมอญ"
+   },
+   "water_level_last": {
+    "water_id": 92,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": -99,
+    "max_in_day": null,
+    "max_in_yesterday": null,
+    "wl_out01": 1.22,
+    "max_out01_day": 1.92
+   }
+  },
+  {
+   "water_id": "100",
+   "station_name": "ค.ทวีวัฒนา-ภาษีฯ",
+   "station_name_en": "Khlong Thawi Watthana, Phasi Charoen",
+   "station_type_id": 3,
+   "active": 1,
+   "water_station_info": {
+    "water_id": 100,
+    "latitude": 13.69163,
+    "longitude": 100.38106,
+    "warning": 0.6,
+    "critical": 0.7,
+    "left_bank": 1.2,
+    "right_bank": 1.2,
+    "bed_bank": -1.66,
+    "water_name": "จุดวัดคลองทวีวัฒนา ตอนคลองภาษีเจริญ"
+   },
+   "water_level_last": {
+    "water_id": 100,
+    "site_timestamp": "/Date(1790873100000)/",
+    "wl_in": 0.36,
+    "max_in_day": 0.41,
+    "max_in_yesterday": 0.42,
+    "wl_out01": -99,
+    "max_out01_day": null
+   }
+  },
+  {
+   "water_id": "12",
+   "station_name": "คลองสองตะวันตก",
+   "station_name_en": "Khlong Song Tawan Tok",
+   "station_type_id": 3,
+   "active": 1,
+   "water_station_info": null,
+   "water_level_last": null
+  }
+ ],
+ "stationMap": [],
+ "arrowMap": [],
+ "riverMap": [],
+ "listRiverMap": [],
+ "dailyheightwater": []
+}

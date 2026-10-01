@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { addFlood } from "@/components/flood-layer";
-import { camIcon, clusterIcon, stationIcon } from "@/components/map-icons";
-import type { MapCamera, MapRef, MapStation } from "@/components/map-types";
+import { camIcon, clusterIcon, roadIcon, stationIcon } from "@/components/map-icons";
+import type { MapCamera, MapRef, MapRoad, MapStation } from "@/components/map-types";
 import { addRadar } from "@/components/radar-layer";
 import { addTmdRadar } from "@/components/tmd-radar-layer";
 import { cluster } from "@/lib/cluster";
@@ -84,6 +84,37 @@ export function useCameraMarkers(mapRef: MapRef, ready: boolean, o: { cctv: bool
     }
     if (sel) marker(sel);
   }, [mapRef, ready, cctv, cameras, selectedCam, zoom, t, open]);
+}
+
+// Flooded-road reports. Text is untrusted, so the popup is built from DOM nodes (textContent), never HTML strings.
+export function useRoadMarkers(mapRef: MapRef, ready: boolean, o: { on: boolean; roads: MapRoad[]; t: Dict }) {
+  const { on, roads, t } = o;
+  useEffect(() => {
+    const m = mapRef.current;
+    if (!ready || !m) return;
+    m.roadLayer.clearLayers();
+    if (!on) return;
+    const line = (tag: string, text: string, cls: string) => {
+      const e = document.createElement(tag);
+      e.className = cls;
+      e.textContent = text;
+      return e;
+    };
+    for (const r of roads) {
+      const body = document.createElement("div");
+      body.className = "max-w-60 text-sm text-slate-900";
+      body.append(
+        line("p", r.title, "font-semibold leading-snug"),
+        ...(r.place ? [line("p", r.place, "mt-0.5 text-xs text-slate-700")] : []),
+        line("p", `${r.sourceLabel} · ${r.ageText}`, "mt-1 text-xs text-slate-700"),
+        line("p", t.roads.caveat, "mt-1 text-xs italic text-slate-700"),
+      );
+      m.L.marker([r.lat, r.lon], { icon: roadIcon(m.L), title: r.title, alt: r.title, zIndexOffset: 700 })
+        .bindPopup(body, { autoPanPadding: [24, 80] })
+        .addTo(m.roadLayer);
+    }
+    return () => void m.roadLayer.clearLayers();
+  }, [mapRef, ready, on, roads, t]);
 }
 
 // Fit once per region (and once per map instance); selecting stations inside it keeps the user's zoom.

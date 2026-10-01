@@ -5,10 +5,10 @@ import { fmtTime, type Dict, type Lang } from "@/lib/i18n";
 import { relevantWarnings } from "@/lib/warnings";
 
 // Official TMD text is shown as TMD wrote it. Never machine-translated.
-export async function WarningStrip({ now, lang, t }: { now: number; lang: Lang; t: Dict }) {
+export async function WarningStrip({ now, lang, t, extra = [] }: { now: number; lang: Lang; t: Dict; extra?: string[] }) {
   const all = await loadWarnings();
   if (!all) return <p className="rounded-lg bg-white/90 dark:bg-slate-900/90 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 shadow-lg dark:ring-1 dark:ring-white/10 backdrop-blur-xl">{t.warnUnchecked}</p>; // "could not check" must not look like "no warnings"
-  const hits = relevantWarnings(all, now);
+  const hits = relevantWarnings(all, now, extra);
   if (hits.length === 0) return null;
   return (
     <section aria-label={t.warnTitle} className="rounded-lg border-2 border-amber-700 dark:border-amber-500 bg-amber-50 dark:bg-amber-950 p-3 shadow-lg">

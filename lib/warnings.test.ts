@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { relevantWarnings, type Warning } from "./warnings.ts";
+import { EXTRA_KEYWORDS, relevantWarnings, type Warning } from "./warnings.ts";
 
 const now = Date.parse("2026-10-01T11:00:00+07:00");
 const w = (announced: string, titleTh: string, descTh = ""): Warning => ({
@@ -27,4 +27,12 @@ test("fresh but unrelated, over-72h, and future items are dropped", () => {
   assert.equal(relevantWarnings([w("2026-09-28 11:00", "ฝน", "กรุงเทพ")], now).length, 1); // exactly 72h
   assert.equal(relevantWarnings([w("2026-10-02 11:00", "ฝน", "กรุงเทพ")], now).length, 0); // future
   assert.equal(relevantWarnings([w("garbage", "ฝน", "กรุงเทพ")], now).length, 0);
+});
+
+test("a Samut Prakan warning shows on the Bang Na tab only", () => {
+  const now = Date.parse("2026-10-02T03:00:00+07:00");
+  const sp = { titleTh: "ฝนตกหนัก", titleEn: "", descTh: "ฝนตกหนักบริเวณจังหวัดสมุทรปราการ", announced: "2026-10-02 01:00", issueNo: 1 } as unknown as Warning;
+  assert.equal(relevantWarnings([sp], now).length, 0, "not relevant to the default views");
+  assert.equal(relevantWarnings([sp], now, EXTRA_KEYWORDS.bangna).length, 1);
+  assert.equal(EXTRA_KEYWORDS.nonthaburi, undefined);
 });

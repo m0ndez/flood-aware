@@ -35,3 +35,15 @@ export function clusterIcon(L: Leaflet, n: number) {
     html: `<div style="width:${size}px;height:${size}px" class="grid place-items-center rounded-full border-2 border-white bg-slate-800 text-sm font-bold text-white shadow-lg">${n}</div>`,
   });
 }
+
+// Flooded-road report: amber road sign with a wave and a road bar, dark outline plus white halo so it holds on
+// light, satellite and dark maps. Shape and glyph carry the meaning, not the amber alone.
+export function roadIcon(L: Leaflet) {
+  const size = 30;
+  return L.divIcon({
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="2" fill="#fff"/><rect x="3" y="3" width="18" height="18" rx="1.5" fill="#fbbf24" stroke="#0f172a" stroke-width="2"/><path d="M5.5 10.5q1.6-2 3.2 0t3.2 0 3.2 0 3.2 0M5.5 14q1.6-2 3.2 0t3.2 0 3.2 0 3.2 0" fill="none" stroke="#0f172a" stroke-width="1.7" stroke-linecap="round"/><path d="M6 18.5h12" stroke="#0f172a" stroke-width="2" stroke-dasharray="3 2"/></svg>`,
+  });
+}
