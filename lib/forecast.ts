@@ -17,7 +17,7 @@ const obj = (x: unknown): Record<string, unknown> | null =>
 
 // Throws on failure so errors are never cached; loadForecast turns that into null.
 async function fetchForecast(lat: number, lon: number): Promise<Forecast> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 600, revalidate: 1800, expire: 7200 });
   const qs = new URLSearchParams({
     latitude: String(lat),
@@ -27,7 +27,7 @@ async function fetchForecast(lat: number, lon: number): Promise<Forecast> {
     forecast_days: "7",
     timezone: "Asia/Bangkok",
   });
-  const res = await fetch(`${URL_BASE}?${qs}`, { signal: AbortSignal.timeout(20_000) });
+  const res = await fetch(`${URL_BASE}?${qs}`, { signal: AbortSignal.timeout(8_000) });
   if (!res.ok) throw new Error(`Open-Meteo: HTTP ${res.status}`);
   const j = obj(await res.json());
   const h = obj(j?.hourly);

@@ -19,7 +19,7 @@ const num = (x: unknown): number | null => {
 
 // Some TMD feeds are served as tis620 (v2 warnings), so decode by the declared charset.
 async function getJson(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(30_000) });
+  const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(8_000) });
   if (!res.ok) throw new Error(`TMD ${path}: HTTP ${res.status}`);
   const cs = /charset=([\w-]+)/i.exec(res.headers.get("content-type") ?? "")?.[1]?.toLowerCase() ?? "utf-8";
   return JSON.parse(new TextDecoder(cs.startsWith("tis") ? "windows-874" : cs).decode(await res.arrayBuffer()));
@@ -28,7 +28,7 @@ async function getJson(path: string): Promise<unknown> {
 // 7-day province outlook. Use v2: v1 times out. Feed arrays are strings, DD/MM/YYYY, newest first.
 // Provinces are matched on their Thai name: TMD's English spellings differ from ThaiWater's ("Chainat", "Sakaeo").
 async function fetchOutlook(provinceTh: string): Promise<OutlookDay[]> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 900, revalidate: 3600, expire: 21600 });
   const provinces = obj(obj(await getJson(`WeatherForecast7Days/v2/?${qs()}`))?.Provinces)?.Province;
   const p = (Array.isArray(provinces) ? provinces : []).map(obj).find((x) => typeof x?.ProvinceNameThai === "string" && x.ProvinceNameThai.trim() === provinceTh);
@@ -76,7 +76,7 @@ function collect(x: unknown, out: Warning[]): Warning[] {
 }
 
 async function fetchWarnings(): Promise<Warning[]> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 300, revalidate: 900, expire: 3600 });
   // v2 is the current feed and must succeed; v1 is best-effort (it has been slow and mostly stale).
   const [v2, v1] = await Promise.allSettled([getJson(`WeatherWarningNews/v2/?${qs()}`), getJson(`WeatherWarningNews/v1/?${qs()}`)]);

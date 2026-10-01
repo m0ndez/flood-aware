@@ -6,20 +6,26 @@ const MAX_BYTES = 3_000_000; // real frames are ~50 KB
 
 // Throws on failure so errors are never cached. The upstream sends no-store, so caching is ours.
 async function fetchLatest(): Promise<RadarFrame> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 120, revalidate: 300, expire: 1800 });
-  const res = await fetch(`${ORIGIN}/api/overlays`, { signal: AbortSignal.timeout(20_000) });
+  const res = await fetch(`${ORIGIN}/api/overlays`, { signal: AbortSignal.timeout(6_000) });
   if (!res.ok) throw new Error(`TMD radar catalogue: HTTP ${res.status}`);
   const frame = parseFrames(await res.json()).at(-1);
   if (!frame) throw new Error("TMD radar catalogue: no usable dBZ frame");
   return frame;
 }
 
+// TMD does not answer from every cloud network. After a failure, say so instantly for 60 s instead of making each
+// visitor wait out the timeout before the client falls back to RainViewer.
+let radarDownUntil = 0;
+
 export async function loadLatestRadar(): Promise<RadarFrame | null> {
+  if (radarDownUntil > Date.now()) return null;
   try {
     return await fetchLatest();
   } catch (e) {
     console.error("TMD radar catalogue failed", e);
+    radarDownUntil = Date.now() + 60_000;
     return null;
   }
 }
@@ -35,7 +41,7 @@ export async function loadRadarImage(stamp: string): Promise<ArrayBuffer | null>
   const latest = await loadLatestRadar();
   if (!latest || latest.stamp !== stamp) return null;
   try {
-    const res = await fetch(`${ORIGIN}${latest.path}`, { signal: AbortSignal.timeout(25_000) });
+    const res = await fetch(`${ORIGIN}${latest.path}`, { signal: AbortSignal.timeout(10_000) });
     const buf = await res.arrayBuffer();
     if (!res.ok || res.headers.get("content-type")?.startsWith("image/png") !== true || buf.byteLength > MAX_BYTES) {
       throw new Error(`radar image ${stamp}: bad upstream response (${res.status})`);

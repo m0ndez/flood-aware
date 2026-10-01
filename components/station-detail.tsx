@@ -3,9 +3,10 @@ import { Suspense } from "react";
 import { ForecastPanel } from "@/components/forecast-panel";
 import { ChevronLeftIcon, TrendIcon, WarnIcon } from "@/components/icons";
 import { LevelChart } from "@/components/level-chart";
+import { RainBox } from "@/components/rain-box";
 import { StatusBadge } from "@/components/status-badge";
 import { fmtTime, type Dict, type Lang } from "@/lib/i18n";
-import { isStale, NEAR_BANK_PCT, parseIct, type Status, type Trend } from "@/lib/status";
+import { NEAR_BANK_PCT, parseIct, type Status, type Trend } from "@/lib/status";
 import type { Graph, Reading } from "@/lib/thaiwater";
 
 const tone = (s: Status) => `var(--st-${s})`; // see app/globals.css
@@ -108,19 +109,9 @@ export function StationDetail({
           </dl>
           <p className="-mt-1 text-xs text-slate-600 dark:text-slate-400">{t.mslNote}</p>
 
-          {reading.rain && (
-            <div className="rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800">
-              <p className="font-semibold">{t.rainFrom}: {reading.rain.name[lang]} ({reading.rain.km.toFixed(1)} km)</p>
-              {failed || isStale(reading.rain.datetime, now) ? (
-                <p>{t.status.stale}</p>
-              ) : (
-                <dl className="mt-1 grid grid-cols-2 gap-x-4">
-                  <Fact label={t.rain24} value={reading.rain.h24.toFixed(1)} />
-                  <Fact label={t.rain1} value={reading.rain.h1 != null ? reading.rain.h1.toFixed(1) : "–"} />
-                </dl>
-              )}
-            </div>
-          )}
+          <Suspense fallback={<div className="h-20 rounded-lg bg-slate-50 dark:bg-slate-800" aria-hidden="true" />}>
+            <RainBox lat={reading.lat} lon={reading.lon} now={now} failed={failed} lang={lang} t={t} />
+          </Suspense>
         </>
       )}
 

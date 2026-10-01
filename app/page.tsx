@@ -31,10 +31,10 @@ export default function Page({ searchParams }: PageProps<"/">) {
 }
 
 async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
-  const sp = await searchParams;
+  const [sp, jar] = await Promise.all([searchParams, cookies()]); // both are request-time reads: do not queue them
   const lang: Lang = sp.lang === "en" ? "en" : "th";
   const t = dict[lang];
-  const mapStyle = parseMapStyle((await cookies()).get(MAP_COOKIE)?.value); // theme preference, see lib/mapstyle.ts
+  const mapStyle = parseMapStyle(jar.get(MAP_COOKIE)?.value); // theme preference, see lib/mapstyle.ts
   const wanted = Number(Array.isArray(sp.station) ? sp.station[0] : sp.station);
 
   // The station list is derived from the feed (Central and Eastern), so load it before validating ?station=.

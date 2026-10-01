@@ -52,7 +52,6 @@ export type Reading = {
   situation: number; // ThaiWater situation_level 1-5
   bankPct: number | null; // % of bank capacity
   bankM: number | null; // min bank level, m MSL
-  rain: Rain | null; // nearest rain gauge
 };
 export type Overview = { fetchedAt: number; readings: Reading[]; stations: Station[] };
 export type Point = { t: string; v: number };
@@ -67,7 +66,7 @@ const obj = (x: unknown): Record<string, unknown> | null =>
   x && typeof x === "object" && !Array.isArray(x) ? (x as Record<string, unknown>) : null;
 
 async function get(path: string): Promise<unknown> {
-  const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(30_000) });
+  const res = await fetch(`${BASE}/${path}`, { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new Error(`ThaiWater ${path}: HTTP ${res.status}`);
   return res.json();
 }
@@ -153,7 +152,7 @@ function nearestRain(lat: number, lon: number, rain: RainRow[]): Rain | null {
 }
 
 // Hardcoded Nonthaburi stations always stay. Central and Eastern ones are derived from the feed (see pickDerived).
-function parseOverview(data: unknown, rain: RainRow[], now: number): { readings: Reading[]; stations: Station[] } {
+function parseOverview(data: unknown, now: number): { readings: Reading[]; stations: Station[] } {
   const rows = parseRows(data);
   const core = new Set(CORE_STATIONS.map((s) => s.id));
   const cands: Candidate[] = rows.map((r) => ({
@@ -182,23 +181,45 @@ function parseOverview(data: unknown, rain: RainRow[], now: number): { readings:
         thaiOnly: r.nameEn == null,
       });
     } else if (!core.has(id)) continue;
-    readings.push({ ...r.reading, rain: nearestRain(r.reading.lat, r.reading.lon, rain) });
+    readings.push(r.reading);
   }
   return { readings, stations };
 }
 
 // Throws on upstream failure so errors are never cached; callers fall back (see loadOverview).
 async function fetchOverview(): Promise<Overview> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 300, revalidate: 600, expire: 3600 });
-  const [wl, rain] = await Promise.all([get("waterlevel_load"), get("rain_24h")]);
+  // Only the gauge feed (240 KB gzipped). The 4.4 MB rain feed is fetched separately, and only for an opened station.
+  const wl = await get("waterlevel_load");
   const rows = unwrap(obj(wl)?.waterlevel_data);
   const fetchedAt = Date.now();
-  return { fetchedAt, ...parseOverview(rows, parseRain(unwrap(rain)), fetchedAt) };
+  return { fetchedAt, ...parseOverview(rows, fetchedAt) };
+}
+
+// Rain gauges inside this box only (Nonthaburi, Central and Eastern provinces with a margin): about a quarter of
+// the national feed, so the cached entry stays small.
+const RAIN_BOX = { south: 11.5, north: 16.8, west: 98.5, east: 103.6 };
+
+// Throws on failure so errors are never cached.
+async function fetchRainRows(): Promise<RainRow[]> {
+  "use cache: remote";
+  cacheLife({ stale: 300, revalidate: 900, expire: 3600 });
+  return parseRain(unwrap(await get("rain_24h"))).filter((r) => r.lat >= RAIN_BOX.south && r.lat <= RAIN_BOX.north && r.lon >= RAIN_BOX.west && r.lon <= RAIN_BOX.east);
+}
+
+// Nearest rain gauge to a station. null = could not load, which the UI must say, not show as 0 mm.
+export async function loadRainNear(lat: number, lon: number): Promise<Rain | null> {
+  try {
+    return nearestRain(lat, lon, await fetchRainRows());
+  } catch (e) {
+    console.error("rain feed failed", e);
+    return null;
+  }
 }
 
 async function fetchGraph(id: number): Promise<Graph> {
-  "use cache";
+  "use cache: remote";
   cacheLife({ stale: 300, revalidate: 600, expire: 3600 });
   const g = obj(unwrap(await get(`waterlevel_graph?station_type=tele_waterlevel&station_id=${id}`)));
   const points: Point[] = [];

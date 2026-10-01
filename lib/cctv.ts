@@ -1,5 +1,3 @@
-import { cacheLife } from "next/cache";
-
 // Two informal public sources, none with stated terms. Fine for a local PoC; get written permission
 // from each owner before any public deployment.
 //  muni    Nonthaburi City Municipality flood center (plain HTTP on a bare IP, 7-22 s per frame)
@@ -17,7 +15,7 @@ export type Camera = {
   labels: string[]; // what to show for each frame
 };
 
-const MUNI = "http://182.52.224.70";
+const MUNI = "http://182.52.224.70"; // frames only: the station list is a static snapshot below
 const MUNI_IMG = "/MilestoneImageService/ImageService.svc/ImageService/GetImage";
 const PAKKRET_IMG = "https://www.thaiclouderp.com/src/img.php";
 
@@ -43,44 +41,49 @@ const STATIC: Camera[] = [
   ...PAKKRET.map((p) => ({ code: p.id, source: "pakkret" as const, name: p.name, lat: p.lat, lon: p.lon, cams: [p.id], labels: [p.name] })),
 ];
 
-const obj = (x: unknown): Record<string, unknown> | null =>
-  x && typeof x === "object" && !Array.isArray(x) ? (x as Record<string, unknown>) : null;
+const MUNI_STATIONS: { code: string; name: string; lat: number; lon: number; cams: string[] }[] = [
+  // Snapshot of the municipal station list (json.php?app=station) taken 2026-10-01: 26 stations, 36 cameras.
+  // Static on purpose: fetching it on every cold start put a slow, flaky HTTP call in front of the whole page.
+  // Re-take the snapshot if the municipality adds cameras; frames are still fetched live.
+  { code: "A1", name: "คลองท่าทราย", lat: 13.889283, lon: 100.490387, cams: ["A1-คลองท่าทราย Cam1", "A1-คลองท่าทราย Cam2"] },
+  { code: "A2", name: "วัดตำหนักใต้", lat: 13.886683, lon: 100.488564, cams: ["A2-วัดตำหนักใต้ Cam1", "A2-วัดตำหนักใต้ Cam2"] },
+  { code: "A3", name: "คลองบางธรณี", lat: 13.883282, lon: 100.488848, cams: ["A3-คลองบางธรณี"] },
+  { code: "A4", name: "คลองอ้อช้าง", lat: 13.87756, lon: 100.48101, cams: ["A4-คลองอ้อช้าง Cam1"] },
+  { code: "A5", name: "คลองบางสร้อยทอง", lat: 13.874929, lon: 100.482431, cams: ["A5-คลองบางสร้อยทอง Cam1", "A5-คลองบางสร้อยทอง Cam2"] },
+  { code: "A6", name: "คลองบางกระสอ", lat: 13.871506, lon: 100.481918, cams: ["A6-คลองบางกระสอ Cam1", "A6-คลองบางกระสอ Cam2"] },
+  { code: "A7", name: "คลองบางซื่อน้อย", lat: 13.860795, lon: 100.482076, cams: ["A7-คลองบางซื่อน้อย Cam1"] },
+  { code: "A8", name: "คลองมะขามโพรง", lat: 13.856844, lon: 100.482236, cams: ["A8-คลองมะขามโพรง Cam1", "A8-คลองมะขามโพรง Cam2"] },
+  { code: "A9", name: "คลองบางแพรก2", lat: 13.852458, lon: 100.490203, cams: ["A9-คลองบางแพรก2 Cam1", "A9-คลองบางแพรก2 Cam2"] },
+  { code: "A10", name: "คลองบางแพรก", lat: 13.849799, lon: 100.490467, cams: ["A10-คลองบางแพรก Cam1", "A10-คลองบางแพรก Cam2"] },
+  { code: "A11", name: "คลองบางขวาง", lat: 13.840246, lon: 100.492018, cams: ["A11-คลองบางขวาง"] },
+  { code: "A12", name: "คลองบางตะนาวศรี", lat: 13.836621, lon: 100.498333, cams: ["A12-คลองบางตะนาวศรี"] },
+  { code: "A13", name: "คลองบางขุนเทียน", lat: 13.832203, lon: 100.498236, cams: ["A13-คลองบางขุนเทียน"] },
+  { code: "A14", name: "บางบุญนาค", lat: 13.826267, lon: 100.502058, cams: ["A14-บางบุญนาค"] },
+  { code: "A15", name: "วัดเขมาฯ", lat: 13.821329, lon: 100.503013, cams: ["A15-วัดเขมาฯ Cam1"] },
+  { code: "A16", name: "คลองบางแพรก (ข้างกรมราชทัณฑ์)", lat: 13.850356, lon: 100.487768, cams: ["A16-คลองบางแพรก กรมราชทัณฑ์"] },
+  { code: "B4", name: "คลองตาโฮ", lat: 13.880922, lon: 100.540506, cams: ["B4-คลองตาโฮ Cam1", "B4-คลองตาโฮ Cam2"] },
+  { code: "B5", name: "ประชานิเวศน์ 2", lat: 13.880567, lon: 100.543425, cams: ["B5-ประชานิเวศน์ 2 Cam1", "B5-ประชานิเวศน์ 2 Cam2"] },
+  { code: "B6", name: "ปลายคลองบางตลาด", lat: 13.877633, lon: 100.549823, cams: ["B6-ปลายคลองบางตลาด Cam1"] },
+  { code: "B7", name: "ประชานิเวศ 4", lat: 13.875714, lon: 100.548785, cams: ["B7-ประชานิเวศน์ 4"] },
+  { code: "B8", name: "ใต้ทางด่วน", lat: 13.85757, lon: 100.533089, cams: ["B8-ใต้ทางด่วน Cam1", "B8-ใต้ทางด่วน Cam2"] },
+  { code: "B9", name: "แยกพงษ์เพชร", lat: 13.854544, lon: 100.544532, cams: ["B9-แยกพงษ์เพชร"] },
+  { code: "B10", name: "คลองส่วย", lat: 13.851083, lon: 100.543807, cams: ["B10-คลองส่วย"] },
+  { code: "B11", name: "คลองศรีเพ็ชร", lat: 13.850907, lon: 100.504496, cams: ["B11-คลองศรีเพ็ชร"] },
+  { code: "B12", name: "คลองขุด ข้าง กสท.", lat: 13.867886, lon: 100.518566, cams: ["B12-คลองขุดข้าง กสท"] },
+  { code: "B13", name: "คลองวัดบัวขวัญ", lat: 13.867641, lon: 100.54777, cams: ["B13-คลองวัดบัวขวัญ"] },
+];
 
-// Throws on failure so errors are never cached.
-async function fetchMuni(): Promise<Camera[]> {
-  "use cache";
-  cacheLife({ stale: 600, revalidate: 3600, expire: 86400 });
-  const res = await fetch(`${MUNI}/json.php?app=station`, { signal: AbortSignal.timeout(20_000) });
-  if (!res.ok) throw new Error(`CCTV list: HTTP ${res.status}`);
-  const rows = obj(await res.json())?.station;
-  const out: Camera[] = [];
-  for (const raw of Array.isArray(rows) ? rows : []) {
-    const r = obj(raw);
-    const loc = obj(r?.location);
-    if (!r || typeof r.code !== "string" || typeof r.name !== "string" || !Array.isArray(r.cctv)) continue;
-    if (typeof loc?.lat !== "number" || typeof loc?.lng !== "number") continue;
-    // Only the camera name is taken from upstream. The URL is rebuilt from our own constants, and the
-    // upstream `ondate` parameter is ignored by the server (verified: it always returns the live frame).
-    const cams = r.cctv.flatMap((u) => {
-      const m = typeof u === "string" ? /[?&]cameraname=([^&]+)$/.exec(u) : null;
-      return m && m[1].trim() ? [m[1].trim()] : [];
-    });
-    if (cams.length > 0) {
-      out.push({ code: r.code, source: "muni", name: r.name, lat: loc.lat, lon: loc.lng, cams, labels: cams.map((c) => c.replace(/^[^-]+-/, "")) });
-    }
-  }
-  return out;
-}
+const MUNI_CAMERAS: Camera[] = MUNI_STATIONS.map((m) => ({
+  ...m,
+  source: "muni" as const,
+  labels: m.cams.map((c) => c.replace(/^[^-]+-/, "")),
+}));
 
-// The static sources never depend on the municipal list, so one source failing hides only itself.
+const ALL: Camera[] = [...MUNI_CAMERAS, ...STATIC];
+
+// No network: the page never waits on a camera list. (Frames are fetched live, on demand, by getFrame.)
 export async function loadCameras(): Promise<Camera[]> {
-  let muni: Camera[] = [];
-  try {
-    muni = await fetchMuni();
-  } catch (e) {
-    console.error("municipal camera list fetch failed", e);
-  }
-  return [...muni, ...STATIC];
+  return ALL;
 }
 
 // ponytail: in-process frame cache + single-flight; a shared cache if this ever runs multi-instance.
@@ -90,6 +93,10 @@ const FRAME_TTL_MS: Record<Source, number> = { muni: 5_000, pakkret: 800 };
 const MAX_UPSTREAM = 6; // distinct cameras in flight; upstream can take 7-22 s per frame, so never queue unbounded work behind it
 const MAX_BYTES = 2_000_000;
 const MIN_BYTES = 500; // Pak Kret answers 200 with an empty body for ids it doesn't know
+// Pak Kret and the municipal server do not answer from every cloud network. Once a source has failed, skip it for
+// 30 s instead of making every player poll wait out the timeout again.
+const DOWN_MS = 30_000;
+const downUntil = new Map<Source, number>();
 const frames = new Map<string, { at: number; buf: ArrayBuffer }>();
 const pending = new Map<string, Promise<{ at: number; buf: ArrayBuffer }>>();
 
@@ -98,10 +105,10 @@ export type FrameError = "not_found" | "busy" | "upstream";
 
 function frameRequest(cam: Camera, upstreamId: string): { url: string; timeout: number } | null {
   if (cam.source === "muni") {
-    return { url: `${MUNI}${MUNI_IMG}?width=800&height=450&cameraname=${encodeURIComponent(upstreamId)}`, timeout: 25_000 };
+    return { url: `${MUNI}${MUNI_IMG}?width=800&height=450&cameraname=${encodeURIComponent(upstreamId)}`, timeout: 25_000 }; // the municipal server really takes 7-22 s per frame
   }
   if (cam.source === "pakkret" && PAKKRET_ID_RE.test(upstreamId)) {
-    return { url: `${PAKKRET_IMG}?t=${Date.now()}&name=${upstreamId}_thumb.jpg`, timeout: 8_000 }; // it stalls 20+ s now and then: give up early, the player keeps the last frame
+    return { url: `${PAKKRET_IMG}?t=${Date.now()}&name=${upstreamId}_thumb.jpg`, timeout: 6_000 }; // it stalls 20+ s now and then: give up early, the player keeps the last frame
   }
   return null;
 }
@@ -114,6 +121,7 @@ export async function getFrame(code: string, n: number): Promise<Frame | { error
   if (!req) return { error: "not_found" };
 
   const key = `${code}/${n}`;
+  if ((downUntil.get(cam.source) ?? 0) > Date.now()) return { error: "upstream" };
   const hit = frames.get(key);
   if (hit && Date.now() - hit.at < FRAME_TTL_MS[cam.source]) return hit;
 
@@ -138,6 +146,7 @@ export async function getFrame(code: string, n: number): Promise<Frame | { error
     return await p;
   } catch (e) {
     console.error("frame fetch failed", e);
+    downUntil.set(cam.source, Date.now() + DOWN_MS);
     return { error: "upstream" };
   }
 }
