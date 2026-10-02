@@ -152,7 +152,8 @@ export function StationMap({
         floodDate={floodDate}
         setFloodDate={setFloodDate}
         lang={lang}
-        message={[radar && radarLayer.msg, flood && `${t.floodAt} ${floodDate}`, cctv && hasCams && t.camCoverage, toolMsg].filter(Boolean).join(" · ")}
+        note={cctv && hasCams ? t.camCoverage : ""}
+        message={[radar && radarLayer.msg, flood && `${t.floodAt} ${floodDate}`, toolMsg].filter(Boolean).join(" · ")}
         t={t}
       />
       <div ref={el} role="region" aria-label={t.mapLabel} className="absolute inset-0 isolate z-0" />

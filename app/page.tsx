@@ -262,7 +262,9 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
           <details className="mt-4 border-t border-slate-200 pt-1 dark:border-slate-700">
             <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold md:min-h-9">{t.outlook.replace("{p}", outlookFor[lang])}</summary>
             <div className="mt-2">
-              <Suspense fallback={<LinesSkeleton />}>
+              {/* Keyed by province: a new province is a new boundary, so its skeleton shows at once. Without the key a first visit to a
+                  region waits for the TMD outlook (about 0.4 s) before the tab switch is shown at all. */}
+              <Suspense key={outlookFor.th} fallback={<LinesSkeleton />}>
                 <Outlook provinceTh={outlookFor.th} lang={lang} t={t} />
               </Suspense>
             </div>

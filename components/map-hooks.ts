@@ -45,7 +45,8 @@ export function useStationMarkers(mapRef: MapRef, ready: boolean, o: { stations:
         title: s.label,
         alt: s.label,
         opacity: hl.size === 0 || spot || s.id === selectedId ? 1 : 0.35, // dimmed, but still clickable
-        zIndexOffset: s.id === selectedId ? 1000 : spot ? 500 : 0,
+        // Gauges are the primary signal: above camera and road badges (500-700), worst status on top of the rest.
+        zIndexOffset: s.id === selectedId ? 1000 : spot ? 900 : STATUS_Z[s.status],
       })
         .on("click", () => open(s.href))
         .addTo(m.layer);
@@ -54,6 +55,8 @@ export function useStationMarkers(mapRef: MapRef, ready: boolean, o: { stations:
     }
   }, [mapRef, ready, stations, selectedId, highlightIds, open]);
 }
+
+const STATUS_Z = { critical: 830, watch: 820, stale: 810, normal: 800 } as const;
 
 export function useCameraMarkers(mapRef: MapRef, ready: boolean, o: { cctv: boolean; cameras: MapCamera[]; selectedCam: string | null; zoom: number; t: Dict; open: (href: string) => void }) {
   const { cctv, cameras, selectedCam, zoom, t, open } = o;

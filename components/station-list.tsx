@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RegionTab } from "@/components/region-tab";
 import { StatusBadge } from "@/components/status-badge";
 import type { Dict } from "@/lib/i18n";
 import type { Region } from "@/lib/regions";
@@ -72,17 +73,19 @@ export function StationList({
   return (
     <section aria-labelledby="all">
       <h2 id="all" tabIndex={-1} data-autofocus className="outline-none mb-2 text-base font-bold">{t.stations}</h2>
-      <nav aria-label={t.regionLabel} className="mb-2 flex flex-wrap gap-1.5">
+      <nav aria-label={t.regionLabel} // Desktop: one scrolling row that stays at the top of the sheet. Phone: wraps, and scrolls away with the content.
+      className="-mx-4 mb-2 flex flex-wrap gap-1.5 px-4 py-2 md:sticky md:top-0 md:z-10 md:flex-nowrap md:overflow-x-auto md:bg-white md:py-1.5 md:[scrollbar-width:none] dark:md:bg-slate-900">
         {regions.map((r) => (
-          <Link
+          <RegionTab
             key={r.key}
             href={r.href}
-            scroll={false}
-            aria-current={r.key === region ? "page" : undefined}
-            className={`flex items-center rounded-full border px-3 py-1 text-sm font-medium ${touch} ${r.key === region ? "border-sky-700 bg-sky-700 text-white" : "border-slate-400 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
+            active={r.key === region}
+            loadingLabel={t.loading}
+            className={`flex shrink-0 items-center whitespace-nowrap rounded-full border px-3 py-1 text-sm font-medium ${touch} ${r.key === region ? "border-sky-700 bg-sky-700 text-white" : "border-slate-400 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"}`}
           >
-            {r.label}{r.count != null && <>&nbsp;<span className="tabular-nums opacity-80">{r.count}</span></>}
-          </Link>
+            {r.label}
+            {r.count != null && <>&nbsp;<span className="tabular-nums opacity-80">{r.count}</span></>}
+          </RegionTab>
         ))}
       </nav>
       {region !== "nonthaburi" && <p className="mb-2 text-xs text-slate-700 dark:text-slate-300">{t.regionNote}</p>}

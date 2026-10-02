@@ -21,8 +21,10 @@ export function CamPanel({ cam, closeHref, lang, t }: { cam: Camera; closeHref: 
           cam.cams.map((_, i) => <CamFrame key={`${cam.code}/${i}`} code={cam.code} n={i} label={cam.labels[i]} gapMs={gapMs} lang={lang} t={t} />)
         )}
       </div>
-      <p className="mt-3 text-xs text-slate-700 dark:text-slate-300">{rate}</p>
-      <p className="text-xs text-slate-700 dark:text-slate-300">{credit}</p>
+      <div className="mt-3 space-y-0.5 border-t border-slate-200 pt-2 text-xs text-slate-700 dark:border-slate-700 dark:text-slate-300">
+        <p>{rate}</p>
+        <p>{credit}</p>
+      </div>
     </section>
   );
 }

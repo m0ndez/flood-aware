@@ -30,6 +30,7 @@ const th = {
     thaiOnly: "พาดหัวข่าวเป็นภาษาไทยตามที่สำนักข่าวเผยแพร่",
     source: "ข่าวจากสำนักข่าว ไม่ใช่ประกาศทางการ",
     official: "ช่องทางทางการ",
+    more: "ดูข่าวอีก {n} รายการ",
     opensNew: "(เปิดแท็บใหม่)",
   },
   bma: {
@@ -207,6 +208,7 @@ const en: typeof th = {
     thaiOnly: "Headlines are in Thai as published, not translated",
     source: "Press reports, not official announcements",
     official: "Official channels",
+    more: "{n} more headlines",
     opensNew: "(opens in a new tab)",
   },
   bma: {

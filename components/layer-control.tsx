@@ -22,6 +22,7 @@ export function LayerControl({
   floodDate,
   setFloodDate,
   message,
+  note,
   lang,
   t,
 }: {
@@ -37,6 +38,7 @@ export function LayerControl({
   floodDate: string;
   setFloodDate: (d: string) => void;
   message: string;
+  note: string; // standing scope note (what the cameras cover): one line until opened
   lang: Lang;
   t: Dict;
 }) {
@@ -113,6 +115,11 @@ export function LayerControl({
           <input type="checkbox" className="size-6" checked={roads.checked} onChange={(e) => roads.set(e.target.checked)} /> {t.roads.layer}
         </label>
       </fieldset>
+      {note && (
+        <details className="group max-w-64 rounded-lg bg-white/90 px-2.5 text-xs text-slate-800 shadow backdrop-blur-xl dark:bg-slate-900/90 dark:text-slate-100 dark:ring-1 dark:ring-white/10">
+          <summary className="flex min-h-8 cursor-pointer items-center truncate group-open:block group-open:py-1.5">{note}</summary>
+        </details>
+      )}
       <p aria-live="polite" className={`${message ? "" : "sr-only"} max-w-64 rounded-lg bg-white/90 dark:bg-slate-900/90 px-2.5 py-1 text-xs text-slate-800 dark:text-slate-100 shadow dark:ring-1 dark:ring-white/10 backdrop-blur-xl`}>
         {message}
       </p>

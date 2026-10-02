@@ -38,6 +38,8 @@ export function LinesSkeleton() {
 
 // Whole page: the map area with its layer panel, and the sheet (bottom on a phone, left card on desktop) with a
 // header, the verdict, the news, the area tabs and some station rows, in the order the real sheet has them.
+// Heights match the real sheet so nothing jumps when the data arrives: on a phone the list view opens as the 96 px
+// collapsed strip (header and verdict line only), on desktop the card fills the screen height.
 export function PageSkeleton({ label }: { label: string }) {
   return (
     <main aria-busy="true" className="relative isolate h-dvh w-full overflow-hidden bg-slate-200 text-slate-900">
@@ -50,8 +52,8 @@ export function PageSkeleton({ label }: { label: string }) {
         <Bone className="h-4 w-3/5" />
         <Bone className="h-4 w-2/3" />
       </div>
-      <div className="fixed inset-x-0 bottom-0 z-40 flex h-[45dvh] flex-col overflow-hidden rounded-t-2xl bg-white/90 px-4 pb-4 shadow-[0_-8px_30px_rgba(15,23,42,0.2)] md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-4 md:h-auto md:max-h-[calc(100dvh-2rem)] md:w-[26rem] md:rounded-2xl md:pt-4 md:shadow-xl">
-        <span aria-hidden="true" className="mx-auto my-2.5 h-1.5 w-10 shrink-0 rounded-full bg-slate-300 md:hidden" />
+      <div className="fixed inset-x-0 bottom-0 z-40 flex h-24 flex-col overflow-hidden rounded-t-2xl bg-white/90 px-4 pb-4 shadow-[0_-8px_30px_rgba(15,23,42,0.2)] md:absolute md:inset-x-auto md:bottom-auto md:left-4 md:top-4 md:h-[calc(100dvh-2rem)] md:w-[26rem] md:rounded-2xl md:pt-4 md:shadow-xl">
+        <span aria-hidden="true" className="mx-auto my-2 h-1.5 w-10 shrink-0 rounded-full bg-slate-300 md:hidden" />
         <div aria-hidden="true" className="min-h-0 flex-1 overflow-hidden">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
@@ -61,7 +63,7 @@ export function PageSkeleton({ label }: { label: string }) {
             </div>
             <Bone className="h-8 w-20 shrink-0 rounded-full" />
           </div>
-          <div className="mt-4 flex items-start gap-3 border-b border-slate-200 pb-3">
+          <div className="mt-2 flex items-start gap-3 border-b border-slate-200 pb-3 md:mt-4">
             <Bone className="size-7 shrink-0 rounded-md" />
             <div className="flex-1">
               <Bone className="h-5 w-3/4" />
@@ -82,7 +84,7 @@ export function PageSkeleton({ label }: { label: string }) {
             <Bone className="h-8 w-24 rounded-full" />
           </div>
           <div className="mt-3 flex flex-col gap-2">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3, 4, 5].map((i) => (
               <Bone key={i} className="h-14 w-full rounded-xl" />
             ))}
           </div>
