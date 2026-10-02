@@ -12,6 +12,7 @@ import { Verdict, headlineText } from "@/components/verdict";
 import { StationDetail } from "@/components/station-detail";
 import { StationList, type RegionTab, type StationRow } from "@/components/station-list";
 import { StatusBadge, StatusIcon } from "@/components/status-badge";
+import { LinesSkeleton, NewsSkeleton, PageSkeleton } from "@/components/skeleton";
 import { StationMap, type MapCamera, type MapRoad, type MapStation } from "@/components/station-map";
 import { Outlook, WarningStrip } from "@/components/tmd-panels";
 import { RoadsSection } from "@/components/roads-section";
@@ -38,7 +39,7 @@ const ROADS_ON_MAP = 150;
 
 export default function Page({ searchParams }: PageProps<"/">) {
   return (
-    <Suspense fallback={<p className="grid h-dvh place-items-center text-slate-700 dark:text-slate-300">{dict.th.loading}</p>}>
+    <Suspense fallback={<PageSkeleton label={dict.th.loading} />}>
       <Dashboard searchParams={searchParams} />
     </Suspense>
   );
@@ -53,7 +54,9 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
   // BMA's canal and pumping-station feed runs in parallel; it is cached, and a failure only affects the Bang Na view.
   // Only the Bang Na view needs BMA, and its first (cold) fetch takes ~5 s: every other view gives it 1.5 s and moves on.
   // The fetch keeps running and fills the cache, so the next visit has it.
-  const needsBma = sp.region === "bangna" || Number(Array.isArray(sp.station) ? sp.station[0] : sp.station) < 0;
+  // The combined "all" view (the default) and Bang Na list BMA stations; the Nonthaburi, Central and Eastern shortcuts do not.
+  const regionQuery = Array.isArray(sp.region) ? sp.region[0] : sp.region;
+  const needsBma = !["nonthaburi", "central", "eastern"].includes(regionQuery ?? "") || Number(Array.isArray(sp.station) ? sp.station[0] : sp.station) < 0;
   const soft = <T,>(p: Promise<T | null>, ms: number) => {
     let timer: ReturnType<typeof setTimeout>;
     return Promise.race([p, new Promise<null>((r) => (timer = setTimeout(() => r(null), ms)))]).finally(() => clearTimeout(timer));
@@ -73,7 +76,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
   const statusFor = (r: Reading | undefined) => (r && isBmaId(r.id) ? (bmaStatus.get(r.id) ?? "stale") : thaiwaterStatus(r));
 
   // The map shows the chosen region (plus the open station, wherever it is).
-  const inView = stations.filter((s) => s.region === region || s.id === selectedId);
+  const inView = stations.filter((s) => region === "all" || s.region === region || s.id === selectedId);
   const mapStations: MapStation[] = inView.flatMap((s) => {
     const r = byId.get(s.id);
     return r ? [{ id: s.id, lat: r.lat, lon: r.lon, status: statusFor(r), name: s.name[lang], label: `${s.name[lang]} · ${t.status[statusFor(r)]}`, href: href(s.id, { cam: cam?.code }) }] : [];
@@ -111,7 +114,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
     label: t.region[k],
     href: href(null, { region: k, group: null, cam: cam?.code }), // a region change clears the highlight
     // Bang Na's count includes BMA, which other views only wait 1.5 s for: no number is better than a wrong one.
-    count: k === "bangna" && !bma && !needsBma ? undefined : stations.filter((s) => s.region === k).length,
+    count: (k === "bangna" || k === "all") && !bma && !needsBma ? undefined : k === "all" ? stations.length : stations.filter((s) => s.region === k).length,
   }));
 
   // Flooded-road reports (Longdo/iTIC): the map layer covers all four views, the sheet lists the one on view.
@@ -131,6 +134,8 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
 
   // A thin area says what it has: gauges per province, how many are not updating, and how many are near Bang Na.
   const coverage = (() => {
+    // The combined view only needs to say when BMA data is second-hand; the Bang Na view also says how thin its cover is.
+    if (region === "all") return bma?.source === "mirror" ? t.bma.viaMirror : undefined;
     if (region !== "bangna") return undefined;
     const c = coverageOf(
       inRegion.flatMap((s) => {
@@ -159,7 +164,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
   // In the Bang Na view the headline is about the ThaiWater gauges (which can say "over bank"); the BMA canals, pumps and
   // gates, amber at most, are a separate labelled line so their routine "above mark" readings do not drive the headline.
   const thaiwaterRows = rows.filter((r) => !r.mark);
-  const bangnaSplit = region === "bangna" && thaiwaterRows.length > 0 && thaiwaterRows.length < rows.length;
+  const bangnaSplit = (region === "bangna" || region === "all") && thaiwaterRows.length > 0 && thaiwaterRows.length < rows.length;
   const focus = region === "nonthaburi" ? rows.filter((r) => r.group === "nonthaburi") : bangnaSplit ? thaiwaterRows : rows;
   const counts = countStatuses(focus.map((r) => r.status));
   const surround = region === "nonthaburi" || bangnaSplit ? countStatuses(rows.map((r) => r.status)) : null;
@@ -171,7 +176,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
     <main className={`${mapStyle === "dark" ? "dark bg-slate-950 text-slate-100" : "bg-white text-slate-900"} relative isolate h-dvh w-full overflow-hidden`}>
       {/* Banner: failure alert + TMD warnings. Above the sheet so it is never hidden. */}
       <div className="pointer-events-none absolute left-3 right-16 top-3 z-50 flex flex-col items-stretch gap-2 md:left-[28rem] md:right-60 md:items-center">
-        {region === "bangna" && needsBma && !bma && ( // without needsBma we only gave BMA 1.5 s, so a miss is not a failure
+        {(region === "bangna" || region === "all") && needsBma && !bma && ( // without needsBma we only gave BMA 1.5 s, so a miss is not a failure
           <p role="alert" className="pointer-events-auto rounded-lg border border-red-700 dark:border-red-500 bg-red-50 dark:bg-red-950 p-3 text-sm font-medium text-red-800 dark:text-red-200 shadow-lg md:max-w-xl">
             {t.bma.unavailable}
           </p>
@@ -183,7 +188,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
         )}
         <div className="pointer-events-auto max-h-[35dvh] w-full overflow-y-auto md:max-w-xl">
           <Suspense fallback={null}>
-            <WarningStrip now={now} lang={lang} t={t} extra={EXTRA_KEYWORDS[region]} />
+            <WarningStrip now={now} lang={lang} t={t} extra={EXTRA_KEYWORDS[region === "all" ? "bangna" : region]} />
           </Suspense>
         </div>
       </div>
@@ -229,7 +234,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
         {cam && <CamPanel cam={cam} closeHref={href(selectedId)} lang={lang} t={t} />}
         {!sel && headline && <Verdict counts={counts} headline={headline} area={t.region[region]} surround={surround} surroundText={bangnaSplit ? t.verdict.surroundBma : undefined} asOf={asOf} t={t} />}
         {!sel && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<NewsSkeleton label={t.loading} />}>
             <NewsSection now={now} lang={lang} t={t} />
           </Suspense>
         )}
@@ -257,7 +262,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
           <details className="mt-4 border-t border-slate-200 pt-1 dark:border-slate-700">
             <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold md:min-h-9">{t.outlook.replace("{p}", outlookFor[lang])}</summary>
             <div className="mt-2">
-              <Suspense fallback={<p className="text-sm text-slate-600 dark:text-slate-400">…</p>}>
+              <Suspense fallback={<LinesSkeleton />}>
                 <Outlook provinceTh={outlookFor.th} lang={lang} t={t} />
               </Suspense>
             </div>
@@ -267,7 +272,7 @@ async function Dashboard({ searchParams }: { searchParams: PageProps<"/">["searc
 
       <AutoRefresh />
       <LangSync lang={lang} />
-      <StationMap stations={mapStations} cameras={mapCameras} selectedId={selectedId} selectedCam={cam?.code ?? null} mapStyle={mapStyle} highlightIds={highlightIds} roads={mapRoads} roadsDefaultOn={region === "bangna"} regionKey={region} floodDates={floodDates(now)} lang={lang} t={t} />
+      <StationMap stations={mapStations} cameras={mapCameras} selectedId={selectedId} selectedCam={cam?.code ?? null} mapStyle={mapStyle} highlightIds={highlightIds} roads={mapRoads} regionKey={region} floodDates={floodDates(now)} lang={lang} t={t} />
 
       <div className="absolute bottom-6 left-[28rem] z-20 hidden rounded-xl bg-white/90 dark:bg-slate-900/90 px-3 py-2 shadow-lg dark:ring-1 dark:ring-white/10 backdrop-blur-xl md:block">
         <Legend t={t} />

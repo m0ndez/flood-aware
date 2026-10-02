@@ -2,7 +2,7 @@
 
 (Started as the Nonthaburi Flood Monitor; the repo and URL are `flood-aware`.)
 
-A public, read-only flood dashboard on one fullscreen map: river and canal levels against bank level, rain, forecasts, rain radar, satellite flood extent and live camera frames. Thai first (`?lang=en` for English). It starts on Nonthaburi and covers Bang Na–Samut Prakan and the Central and Eastern provinces around it. It does not cover the north, northeast or south.
+A public, read-only flood dashboard on one fullscreen map: river and canal levels against bank level, rain, forecasts, rain radar, satellite flood extent and live camera frames. Thai first (`?lang=en` for English). It opens on one combined "All areas" view (every station, camera and flooded-road report, nothing to filter first), with Nonthaburi, Bang Na–Samut Prakan, Central and Eastern as optional shortcuts. It does not cover the north, northeast or south.
 
 **It is a personal portfolio/demo, not an official warning service.** Stale, missing or failed data is shown as stale, never as normal. For real warnings follow the authorities (e.g. tmd.go.th).
 

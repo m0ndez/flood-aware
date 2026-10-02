@@ -36,6 +36,18 @@ export function clusterIcon(L: Leaflet, n: number) {
   });
 }
 
+// Count badge for a group of flooded-road reports: square and amber with a dark outline, like the sign itself, so it
+// cannot be mistaken for the round dark camera cluster.
+export function roadClusterIcon(L: Leaflet, n: number) {
+  const size = n < 10 ? 34 : n < 100 ? 40 : 46;
+  return L.divIcon({
+    className: "",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `<div style="width:${size}px;height:${size}px" class="grid place-items-center rounded-md border-2 border-slate-900 bg-amber-400 text-sm font-bold text-slate-900 shadow-lg ring-2 ring-white">${n}</div>`,
+  });
+}
+
 // Flooded-road report: amber road sign with a wave and a road bar, dark outline plus white halo so it holds on
 // light, satellite and dark maps. Shape and glyph carry the meaning, not the amber alone.
 export function roadIcon(L: Leaflet) {

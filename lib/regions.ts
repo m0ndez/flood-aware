@@ -1,7 +1,8 @@
 // Which provinces belong to which view, and which of ThaiWater's ~800 gauges are worth showing.
 // Codes are the standard Thai province codes (verified against the feed's geocode.province_code).
-export type Region = "nonthaburi" | "bangna" | "central" | "eastern";
-export const REGIONS: Region[] = ["nonthaburi", "bangna", "central", "eastern"];
+// "all" is the default view: every station and camera at once, no area to pick first. The other four are shortcuts.
+export type Region = "all" | "nonthaburi" | "bangna" | "central" | "eastern";
+export const REGIONS: Region[] = ["all", "nonthaburi", "bangna", "central", "eastern"];
 
 // Chao Phraya basin and the provinces around Bangkok (Samut Prakan, 11, and east Bangkok belong to "bangna").
 const CENTRAL = new Set(["10", "12", "13", "14", "15", "16", "17", "18", "19", "73"]);
@@ -14,6 +15,7 @@ export const BANGNA_BOX = { south: 13.5, north: 13.8, west: 100.52, east: 100.95
 // Where each view looks for flooded-road reports. Rough boxes around the views, not boundaries.
 export type Box = { south: number; north: number; west: number; east: number };
 export const REGION_BOX: Record<Region, Box> = {
+  all: { south: 11.9, north: 16.3, west: 99.3, east: 103.3 },
   nonthaburi: { south: 13.6, north: 14.2, west: 100.2, east: 100.8 },
   bangna: BANGNA_BOX,
   central: { south: 12.9, north: 16.3, west: 99.3, east: 101.4 },

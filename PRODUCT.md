@@ -34,7 +34,7 @@ Confirmed and built:
 - A flooded-road reports layer and list (Longdo/iTIC) and a flood news list from Thai outlets' own feeds, with a fixed row of official-body links.
 - Map layers: three base maps (standard, satellite, dark; dark also themes the UI), TMD radar with a RainViewer fallback, NASA GIBS flood extent, CCTV cameras (Mueang Nonthaburi and Pak Kret stills through our proxy; about 75 Highways and iTIC road cameras as live HLS video straight from the iTIC relay), my-location and drop-a-pin tools.
 - TMD warnings strip (only when a recent warning mentions the area) and a 7-day TMD outlook per province.
-- State lives in the URL (`station`, `region` including `bangna`, `group`, `cam`, `lang`; BMA stations have negative ids); the map style is a cookie.
+- The default view is "all areas" (every station, with the CCTV and flooded-road layers on from the start); Nonthaburi, Bang Na, Central and Eastern are shortcuts. State lives in the URL (`station`, `region` (`all` by default, or `nonthaburi`, `bangna`, `central`, `eastern`), `group`, `cam`, `lang`; BMA stations have negative ids); the map style is a cookie.
 
 Constraints:
 - No accounts and no database. It is deployed on Vercel (flood-aware-mu.vercel.app), reading public feeds on the server and caching them for a few minutes.

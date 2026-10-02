@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { addFlood } from "@/components/flood-layer";
-import { camIcon, clusterIcon, roadIcon, stationIcon } from "@/components/map-icons";
+import { camIcon, clusterIcon, roadClusterIcon, roadIcon, stationIcon } from "@/components/map-icons";
 import type { MapCamera, MapRef, MapRoad, MapStation } from "@/components/map-types";
 import { addRadar } from "@/components/radar-layer";
 import { addTmdRadar } from "@/components/tmd-radar-layer";
@@ -87,8 +87,8 @@ export function useCameraMarkers(mapRef: MapRef, ready: boolean, o: { cctv: bool
 }
 
 // Flooded-road reports. Text is untrusted, so the popup is built from DOM nodes (textContent), never HTML strings.
-export function useRoadMarkers(mapRef: MapRef, ready: boolean, o: { on: boolean; roads: MapRoad[]; t: Dict }) {
-  const { on, roads, t } = o;
+export function useRoadMarkers(mapRef: MapRef, ready: boolean, o: { on: boolean; roads: MapRoad[]; zoom: number; t: Dict }) {
+  const { on, roads, zoom, t } = o;
   useEffect(() => {
     const m = mapRef.current;
     if (!ready || !m) return;
@@ -100,7 +100,7 @@ export function useRoadMarkers(mapRef: MapRef, ready: boolean, o: { on: boolean;
       e.textContent = text;
       return e;
     };
-    for (const r of roads) {
+    const marker = (r: MapRoad) => {
       const body = document.createElement("div");
       body.className = "max-w-60 text-sm text-slate-900";
       body.append(
@@ -112,9 +112,20 @@ export function useRoadMarkers(mapRef: MapRef, ready: boolean, o: { on: boolean;
       m.L.marker([r.lat, r.lon], { icon: roadIcon(m.L), title: r.title, alt: r.title, zIndexOffset: 700 })
         .bindPopup(body, { autoPanPadding: [24, 80] })
         .addTo(m.roadLayer);
+    };
+    // Zoomed out, nearby reports collapse into a count badge (like the cameras) so they do not bury the gauges.
+    for (const g of cluster(roads, zoom)) {
+      if (g.items.length === 1) {
+        marker(g.items[0]);
+        continue;
+      }
+      const label = t.roads.cluster.replace("{n}", String(g.items.length));
+      m.L.marker([g.lat, g.lon], { icon: roadClusterIcon(m.L, g.items.length), title: label, alt: label, zIndexOffset: 650 })
+        .on("click", () => m.map.fitBounds(g.items.map((i) => [i.lat, i.lon] as [number, number]), { ...viewPadding(), maxZoom: 17 }))
+        .addTo(m.roadLayer);
     }
     return () => void m.roadLayer.clearLayers();
-  }, [mapRef, ready, on, roads, t]);
+  }, [mapRef, ready, on, roads, zoom, t]);
 }
 
 // Fit once per region (and once per map instance); selecting stations inside it keeps the user's zoom.

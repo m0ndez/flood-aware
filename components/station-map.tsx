@@ -32,7 +32,6 @@ export function StationMap({
   stations,
   cameras,
   roads,
-  roadsDefaultOn,
   selectedId,
   selectedCam,
   mapStyle,
@@ -45,7 +44,6 @@ export function StationMap({
   stations: MapStation[];
   cameras: MapCamera[];
   roads: MapRoad[]; // flooded-road reports, already capped by the caller
-  roadsDefaultOn: boolean;
   selectedId: number | null;
   selectedCam: string | null;
   mapStyle: MapStyle; // from the "map" cookie, read on the server
@@ -74,11 +72,8 @@ export function StationMap({
   const toolsRef = useRef<ReturnType<typeof addMapTools> | null>(null);
   const [radar, setRadar] = useState(false);
   const [flood, setFlood] = useState(false);
-  const [cctv, setCctv] = useState(selectedCam != null);
-  // The default follows the view (on in Bang Na), and a manual toggle holds until the view changes.
-  const [roadsPick, setRoadsPick] = useState<{ region: string; on: boolean } | null>(null);
-  const roadsOn = roadsPick?.region === regionKey ? roadsPick.on : roadsDefaultOn;
-  const setRoadsOn = (on: boolean) => setRoadsPick({ region: regionKey, on });
+  const [cctv, setCctv] = useState(true); // cameras are part of the picture from the start, not a filter to switch on
+  const [roadsOn, setRoadsOn] = useState(true); // on from the start like the cameras: nothing to switch on first
   const [floodDate, setFloodDate] = useState(floodDates[0] ?? "");
 
   useEffect(() => {
@@ -111,7 +106,7 @@ export function StationMap({
   useBasemap(mapRef, ready, style);
   useStationMarkers(mapRef, ready, { stations, selectedId, highlightIds, open });
   useCameraMarkers(mapRef, ready, { cctv, cameras, selectedCam, zoom, t, open });
-  useRoadMarkers(mapRef, ready, { on: roadsOn, roads, t });
+  useRoadMarkers(mapRef, ready, { on: roadsOn, roads, zoom, t });
   useRegionFit(mapRef, ready, stations, regionKey);
   useSpotlightFit(mapRef, ready, stations, highlightIds);
   usePanToSelected(mapRef, ready, stations, selectedId);

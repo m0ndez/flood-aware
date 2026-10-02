@@ -60,6 +60,7 @@ const th = {
     caveat: "รายงานจากผู้ขับขี่และหน่วยงาน ไม่ใช่ค่าที่วัดได้ ความลึกและเวลาเลิกท่วมไม่แน่นอน",
     source: { doh: "กรมทางหลวง", itic: "iTIC", public: "ผู้ใช้ทั่วไป" },
     more: "และอีก {n} รายงานบนแผนที่",
+    cluster: "รายงานถนนน้ำท่วม {n} รายการ แตะเพื่อขยาย",
     elsewhere: "รายงานในพื้นที่อื่นของประเทศ {n} รายการ แสดงบนแผนที่",
     credit: "ข้อมูล: Longdo Traffic / iTIC",
   },
@@ -71,7 +72,7 @@ const th = {
   trendWord: { rising: "สูงขึ้น", falling: "ลดลง", steady: "ทรงตัว" },
   loading: "กำลังโหลด… Loading…",
   regionLabel: "พื้นที่",
-  region: { nonthaburi: "นนทบุรี", bangna: "บางนา–สมุทรปราการ", central: "ภาคกลาง", eastern: "ภาคตะวันออก" },
+  region: { all: "ทุกพื้นที่", nonthaburi: "นนทบุรี", bangna: "บางนา–สมุทรปราการ", central: "ภาคกลาง", eastern: "ภาคตะวันออก" },
   coverage: {
     lead: "สถานีที่ตรวจสอบได้ในพื้นที่นี้",
     province: "{p} {n} สถานี",
@@ -236,6 +237,7 @@ const en: typeof th = {
     caveat: "Reports from drivers and agencies, not measurements. Depth and when it clears are uncertain.",
     source: { doh: "Dept. of Highways", itic: "iTIC", public: "Public report" },
     more: "and {n} more on the map",
+    cluster: "{n} flooded-road reports, tap to zoom in",
     elsewhere: "{n} reports elsewhere in Thailand, on the map layer",
     credit: "Source: Longdo Traffic / iTIC",
   },
@@ -247,7 +249,7 @@ const en: typeof th = {
   trendWord: { rising: "Rising", falling: "Falling", steady: "Steady" },
   loading: "กำลังโหลด… Loading…",
   regionLabel: "Area",
-  region: { nonthaburi: "Nonthaburi", bangna: "Bang Na–Samut Prakan", central: "Central", eastern: "Eastern" },
+  region: { all: "All areas", nonthaburi: "Nonthaburi", bangna: "Bang Na–Samut Prakan", central: "Central", eastern: "Eastern" },
   coverage: {
     lead: "What is monitored here",
     province: "{p} {n} gauges",

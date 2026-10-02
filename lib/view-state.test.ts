@@ -15,31 +15,34 @@ const derived = (id: number, region: "central" | "eastern", provinceCode: string
 });
 const stations: Station[] = [...CORE_STATIONS, derived(2611, "central", "14"), derived(504994, "eastern", "25")];
 
-test("no usable ?station= is the list view in Nonthaburi", () => {
+test("no usable ?station= is the combined list view", () => {
   for (const sp of [{}, { station: "abc" }, { station: "" }, { station: "999999" }, { station: ["x"] }]) {
     const v = resolveView(sp, stations);
     assert.equal(v.selectedId, null);
-    assert.equal(v.region, "nonthaburi");
+    assert.equal(v.region, "all");
+    assert.equal(v.inRegion.length, stations.length, "the combined view holds every station");
   }
 });
 
-test("the open station decides the region, even against a conflicting ?region=", () => {
-  const v = resolveView({ station: "504994", region: "central" }, stations);
+test("opening a station does not change the view, so back returns to the list it came from", () => {
+  const v = resolveView({ station: "504994" }, stations);
   assert.equal(v.selectedId, 504994);
-  assert.equal(v.region, "eastern");
-  assert.deepEqual(v.inRegion.map((s) => s.id), [504994]);
+  assert.equal(v.region, "all");
+  assert.equal(resolveView({ station: "504994", region: "central" }, stations).region, "central", "an explicit ?region= is kept");
 });
 
 test("?region= is honoured when valid and falls back when not", () => {
   assert.equal(resolveView({ region: "central" }, stations).region, "central");
   assert.equal(resolveView({ region: ["eastern", "central"] }, stations).region, "eastern");
-  for (const bad of ["CENTRAL", "north", "", "../x"]) assert.equal(resolveView({ region: bad }, stations).region, "nonthaburi");
+  for (const bad of ["CENTRAL", "north", "", "../x"]) assert.equal(resolveView({ region: bad }, stations).region, "all");
+  assert.equal(resolveView({ region: "nonthaburi" }, stations).region, "nonthaburi");
 });
 
 test("a group only counts if it exists in the region on screen", () => {
   assert.equal(resolveView({ group: "upstream" }, stations).activeGroup, "upstream");
+  assert.equal(resolveView({ group: "p14" }, stations).activeGroup, "p14", "the combined view has every group");
   assert.equal(resolveView({ region: "central", group: "p14" }, stations).activeGroup, "p14");
-  assert.equal(resolveView({ group: "p14" }, stations).activeGroup, null, "a Central province in the Nonthaburi view");
+  assert.equal(resolveView({ region: "nonthaburi", group: "p14" }, stations).activeGroup, null, "a Central province in the Nonthaburi view");
   assert.equal(resolveView({ group: "<script>" }, stations).activeGroup, null);
   assert.equal(groupKeyOf(derived(1, "central", "14")), "p14");
   assert.equal(groupKeyOf(CORE_STATIONS[0]), "nonthaburi");
@@ -50,7 +53,8 @@ test("links carry language, station, camera and the active group; a region chang
   assert.equal(href(26), "/?station=26&lang=th&group=upstream");
   assert.equal(href(26, { lang: "en", cam: "A 1" }), "/?station=26&lang=en&cam=A%201&group=upstream");
   assert.equal(href(null, { region: "central", group: null }), "/?region=central&lang=th");
-  assert.equal(href(null, { region: "nonthaburi", group: null }), "/?lang=th", "the default region is not written");
+  assert.equal(href(null, { region: "all", group: null }), "/?lang=th", "the default region is not written");
+  assert.equal(href(null, { region: "nonthaburi", group: null }), "/?region=nonthaburi&lang=th");
   assert.equal(href(null, { group: "p14" }), "/?lang=th&group=p14");
   assert.equal(makeHref("en", null)(null), "/?lang=en");
 });

@@ -60,7 +60,8 @@ export function StationList({
     region === "nonthaburi"
       ? GROUPS.map((g) => ({ key: g as string, label: t.group[g], rows: rows.filter((r) => r.group === g) }))
       : [...Map.groupBy(rows, (r) => r.groupKey)]
-          .map(([key, rs]) => ({ key, label: rs[0].province ?? key, rows: rs }))
+          // The combined view mixes Nonthaburi's hand-made roles with provinces, so a role says which area it is in.
+          .map(([key, rs]) => ({ key, label: rs[0].province ?? `${t.region.nonthaburi} · ${t.group[rs[0].group]}`, rows: rs }))
           .sort((a, b) => worstRank(b.rows) - worstRank(a.rows) || a.label.localeCompare(b.label))
   ).map((g) => {
     // A river shared by every row is said once in the heading instead of on each row.

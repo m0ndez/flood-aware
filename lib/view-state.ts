@@ -15,10 +15,11 @@ export const groupKeyOf = (s: Station) => (s.provinceCode ? `p${s.provinceCode}`
 export function resolveView(sp: SearchParams, stations: Station[]) {
   // No (valid) ?station= means the list view; a station in the URL opens its detail.
   const sel = stations.find((s) => s.id === Number(first(sp.station)));
-  // The open station decides the region; otherwise ?region=, otherwise Nonthaburi. Unknown values fall back.
+  // ?region= if valid, otherwise the combined "all" view. Opening a station does not change the view, so the list a
+  // visitor came from is the one "back" returns to. Unknown values fall back.
   const regionParam = first(sp.region);
-  const region: Region = sel?.region ?? REGIONS.find((r) => r === regionParam) ?? "nonthaburi";
-  const inRegion = stations.filter((s) => s.region === region);
+  const region: Region = REGIONS.find((r) => r === regionParam) ?? "all";
+  const inRegion = region === "all" ? stations : stations.filter((s) => s.region === region);
   // A group from another region (or a made-up one) is ignored rather than highlighting nothing.
   const groupParam = first(sp.group);
   const activeGroup = groupParam && inRegion.some((s) => groupKeyOf(s) === groupParam) ? groupParam : null;
@@ -34,7 +35,7 @@ export function makeHref(lang: Lang, activeGroup: string | null) {
     const group = opts.group === undefined ? activeGroup : opts.group;
     return `/?${[
       id != null && `station=${id}`,
-      id == null && opts.region && opts.region !== "nonthaburi" && `region=${opts.region}`,
+      id == null && opts.region && opts.region !== "all" && `region=${opts.region}`,
       `lang=${opts.lang ?? lang}`,
       opts.cam && `cam=${encodeURIComponent(opts.cam)}`,
       group && `group=${group}`,
